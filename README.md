@@ -8,6 +8,7 @@ An outreach tracker for finding a work-practice placement (työharjoittelu) duri
 
 - 195 Helsinki, Espoo and Vantaa companies ranked by a fit score (0–100). The score is based on priority, open junior/full-stack roles, AI-tooling stack, team size and verified contacts.
 - Stages: Not contacted → Sent → Replied → Interview → Accepted / Declined. Stages change inline or from the detail panel, and every change is written to an activity log.
+- List and Board views. The Kanban board supports drag and drop with mouse and touch (long-press on phones and tablets), with auto-scroll while dragging.
 - Follow-up reminders: marking a company as Sent schedules a follow-up 7 days later, and overdue ones are highlighted.
 - Message templates in English and Finnish with `{company}`, `{name}`, `{email}`, `{phone}` and `{link}` variables. Copy the subject and body, then mark the company as sent.
 - Stats for contacted companies, response rate, interviews and follow-ups due.
@@ -15,7 +16,7 @@ An outreach tracker for finding a work-practice placement (työharjoittelu) duri
 - Add your own companies, and export to CSV.
 - Backup and restore as JSON. All data stays in your browser (`localStorage`).
 - Light and dark theme, and works on phones.
-- Keyboard shortcuts: `/` search · `j`/`k` move · `Enter` open · `1`–`6` set stage · `Esc` close.
+- Keyboard shortcuts: `/` search · `j`/`k` move · `Enter` open (list rows and board cards) · `1`–`6` set stage · `Esc` close.
 
 ## Stack
 

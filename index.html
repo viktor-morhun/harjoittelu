@@ -146,6 +146,37 @@ textarea:focus,.field:focus{outline:0;border-color:var(--fg)}
 .menu button:hover,.menu button:focus-visible{background:var(--subtle);outline:0}
 .menu button[aria-checked="true"]::before{content:"";position:absolute;left:11px;top:50%;width:4px;height:8px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:translateY(-65%) rotate(45deg)}
 
+/* view switch + board */
+[hidden]{display:none!important}
+.viewsw{display:inline-flex;border:1px solid var(--line);border-radius:6px;padding:2px;height:32px;gap:2px}
+.viewsw button{border:0;background:none;border-radius:4px;padding:0 10px;font-size:13px;color:var(--muted);display:inline-flex;align-items:center;gap:6px}
+.viewsw button:hover{color:var(--fg)}
+.viewsw button[aria-pressed="true"]{background:var(--sel);color:var(--fg)}
+.board{overflow-x:auto;padding-left:max(20px,calc(50vw - 540px));padding-right:max(20px,env(safe-area-inset-right,0px));padding-bottom:64px}
+.cols{display:grid;grid-auto-flow:column;grid-auto-columns:272px;gap:12px;align-items:start;width:max-content}
+.col{background:var(--subtle);border:1px solid var(--line);border-radius:10px;padding:8px;display:grid;grid-template-columns:minmax(0,1fr);min-width:0;gap:8px;scroll-snap-align:start;min-height:140px;transition:background-color .12s,border-color .12s}
+.col.over{border-color:var(--fg);background:var(--sel)}
+.col-h{display:flex;justify-content:space-between;align-items:center;padding:2px 4px}
+.col-h .n{font:12px var(--mono);color:var(--muted)}
+.badge{border-radius:999px;padding:2px 9px;font-size:12px;font-weight:500}
+.cards{display:grid;gap:6px;grid-template-columns:minmax(0,1fr)}
+.card{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:grid;grid-template-columns:minmax(0,1fr);min-width:0;gap:2px;cursor:grab;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:manipulation}
+.card:hover{border-color:var(--muted)}
+.card.active{border-color:var(--fg)}
+.card-t{min-width:0;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.card-t b{display:block;font-weight:500;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card .score{font:12px var(--mono);color:var(--muted)}
+.card .sub{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .cd{font:12px var(--mono);color:var(--muted);margin-top:4px}
+.card .cd.due{color:var(--amber)}
+.card.placeholder{opacity:.35}
+.card.lift{transform:scale(1.02);box-shadow:var(--shadow)}
+.ghost{position:fixed;left:0;top:0;z-index:60;pointer-events:none;box-shadow:var(--shadow);cursor:grabbing;opacity:.96}
+body.dragging,body.dragging *{cursor:grabbing!important;user-select:none;-webkit-user-select:none}
+.more{border:0;background:none;color:var(--muted);font-size:12px;padding:6px}
+.more:hover{color:var(--fg)}
+.col-empty{font-size:12px;color:var(--muted);text-align:center;padding:20px 0;border:1px dashed var(--line);border-radius:8px}
+
 /* dialogs */
 dialog{border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--fg);padding:0;width:min(520px,calc(100vw - 32px));box-shadow:var(--shadow)}
 dialog::backdrop{background:rgba(0,0,0,.25)}
@@ -158,6 +189,9 @@ dialog textarea{min-height:160px;font-size:13px}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:8px 14px;border-radius:6px;font-size:13px;z-index:40}
 
 @media (max-width:760px){
+  .cols{grid-auto-columns:82vw}
+  .board{scroll-snap-type:x proximity;scroll-padding-left:20px}
+  .viewsw button span{display:none}
   .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
   .stat:nth-child(3){border-left:0}
   .stat:nth-child(n+3){border-top:1px solid var(--line)}
@@ -194,11 +228,16 @@ dialog textarea{min-height:160px;font-size:13px}
     <button class="field dd" type="button" data-menu="city" aria-haspopup="menu" aria-expanded="false"></button>
     <button class="field toggle" id="hiring" type="button" aria-pressed="false">Hiring now</button>
     <button class="field dd" type="button" data-menu="sort" aria-haspopup="menu" aria-expanded="false"></button>
+    <div class="viewsw" role="group" aria-label="View">
+      <button type="button" data-view="list" aria-pressed="true" aria-label="List view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg><span>List</span></button>
+      <button type="button" data-view="board" aria-pressed="false" aria-label="Board view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="11" rx="1.5"/><rect x="17" y="4" width="4" height="7" rx="1.5"/></svg><span>Board</span></button>
+    </div>
   </div>
 
   <div class="table" id="table" role="list"></div>
 </div>
 
+<div class="board" id="board" hidden></div>
 <div id="drawerRoot"></div>
 <div class="menu" id="menu" role="menu" hidden></div>
 
@@ -264,6 +303,7 @@ Ystävällisin terveisin
 {link}`;
 
 let progress={}, custom=[], profile={}, db=null, dl=null, canWrite=false;
+let view="list";try{if(localStorage.getItem("harjoittelu-pipeline:view")==="board")view="board"}catch(_){}
 let F={prio:"",city:"",sort:"fit"}, tab="", dueOnly=false, openId=null, sel=-1, lang="en", visible=[];
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -322,14 +362,17 @@ function closeMenu(refocus){
 }
 function pickMenu(v){const a=menuAnchor;const m=MENUS[a.dataset.menu];closeMenu(true);m.set(v,a);labels()}
 function list(){
+  const isB=view==="board";$("table").hidden=isB;$("board").hidden=!isB;$("tabs").hidden=isB;
+  document.querySelectorAll("[data-view]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.view===view));
   const q=$("q").value.trim().toLowerCase(),pr=F.prio,city=F.city,hire=$("hiring").getAttribute("aria-pressed")==="true",sort=F.sort;
-  let L=all().filter(c=>(!tab||st(c.id)===tab)&&(!pr||c.prio===pr)&&(!city||(c.city||"").includes(city))&&(!hire||HIRING.test(c.source||""))&&(!dueOnly||isDue(c.id))&&
+  let L=all().filter(c=>(isB||!tab||st(c.id)===tab)&&(!pr||c.prio===pr)&&(!city||(c.city||"").includes(city))&&(!hire||HIRING.test(c.source||""))&&(!dueOnly||isDue(c.id))&&
     (!q||[c.name,c.type,c.why,c.city,P(c.id).notes].join(" ").toLowerCase().includes(q)));
   const cmp={fit:(a,b)=>(b.score??0)-(a.score??0)||a.name.localeCompare(b.name),
     name:(a,b)=>a.name.localeCompare(b.name),
     updated:(a,b)=>(P(b.id).updatedAt||"").localeCompare(P(a.id).updatedAt||"")||(b.score??0)-(a.score??0),
     follow:(a,b)=>(P(a.id).followUp||"9999").localeCompare(P(b.id).followUp||"9999")||(b.score??0)-(a.score??0)}[sort];
   visible=L.sort(cmp);
+  if(isB){board(visible);return}
   if(!visible.length){$("table").innerHTML=`<div class="empty">No companies match.</div>`;return}
   $("table").innerHTML=`<div class="tr th" role="presentation"><span>Company</span><span class="r">Fit</span><span>Stage</span><span class="r">Contacted</span><span class="r">Follow-up</span></div>`+
    visible.map((c,i)=>{const p=P(c.id);return `<div class="tr row${c.id===openId||i===sel?" active":""}" role="listitem" data-id="${esc(c.id)}" data-i="${i}" tabindex="-1">
@@ -400,6 +443,9 @@ function close(){const id=openId;openId=null;render();document.querySelector(`.r
 
 document.addEventListener("click",e=>{
   const t=e.target;let x;
+  if(suppressClick)return;
+  if(x=t.closest("[data-view]")){view=x.dataset.view;try{localStorage.setItem("harjoittelu-pipeline:view",view)}catch(_){}sel=-1;list();return}
+  if(x=t.closest("[data-more]")){expanded[x.dataset.more]=true;list();return}
   if(x=t.closest("#menu [data-v]")){pickMenu(x.dataset.v);return}
   if(x=t.closest("[data-menu]")){if(menuAnchor===x){closeMenu(true)}else openMenu(x);return}
   if(!t.closest("#menu"))closeMenu();
@@ -414,7 +460,7 @@ document.addEventListener("click",e=>{
   if(x=t.closest("[data-remove]")){if(x.dataset.sure){db.collection("custom").doc(x.dataset.remove).delete().then(()=>{openId=null;toast("Removed")})}else{x.dataset.sure="1";x.textContent="Click again to remove"}return}
   if(t.closest("[data-close]")){t.closest("dialog").close();return}
   if(t.closest("select,input,textarea,a,button"))return;
-  if(x=t.closest(".row")){open(x.dataset.id)}
+  if(x=t.closest(".row,.card")){open(x.dataset.id)}
 });
 document.addEventListener("change",e=>{
   const t=e.target;
@@ -453,6 +499,81 @@ $("exportBtn").onclick=async()=>{
   if(!dl){toast("Export isn't available in this view");return}
   try{await dl.save({filename:`pipeline-${todayISO()}.csv`,data:csv})}catch(err){if(err?.code!=="declined")toast("Export failed")}
 };
+
+/* ---------- board ---------- */
+const LIMIT=30, expanded={};
+function card(c){
+  const p=P(c.id);
+  const meta=p.stage==="sent"&&p.followUp?`<span class="cd${isDue(c.id)?" due":""}">Follow up ${fmt(p.followUp)}</span>`:p.date?`<span class="cd">Contacted ${fmt(p.date)}</span>`:"";
+  return `<article class="card${c.id===openId?" active":""}" data-id="${esc(c.id)}" tabindex="0" aria-label="${esc(c.name)}, ${LABEL[st(c.id)]}">
+    <div class="card-t"><b>${esc(c.name)}</b><span class="score">${c.score??""}</span></div>
+    <span class="sub">${esc(c.city)}${HIRING.test(c.source||"")?" · Hiring now":""}</span>${meta}</article>`;
+}
+function board(cards){
+  const by={};STAGES.forEach(s=>by[s[0]]=[]);cards.forEach(c=>by[st(c.id)].push(c));
+  const B=$("board"),left=B.scrollLeft;
+  B.innerHTML=`<div class="cols">${STAGES.map(([k,l])=>{const L=by[k],lim=expanded[k]?L.length:LIMIT;
+    return `<section class="col" data-col="${k}" aria-label="${l}">
+      <header class="col-h"><span class="badge s-${k}">${l}</span><span class="n">${L.length}</span></header>
+      <div class="cards">${L.length?L.slice(0,lim).map(card).join(""):`<div class="col-empty">${canWrite?"Drop here":"Empty"}</div>`}
+      ${L.length>lim?`<button class="more" type="button" data-more="${k}">Show ${L.length-lim} more</button>`:""}</div></section>`}).join("")}</div>`;
+  B.scrollLeft=left;
+}
+
+/* drag and drop: mouse drags right away, touch after a long press */
+let drag=null, suppressClick=false;
+function startDrag(x,y){
+  const d=drag;if(!d||!d.el.isConnected)return;
+  d.active=true;closeMenu();
+  const r=d.el.getBoundingClientRect();d.ox=x-r.left;d.oy=y-r.top;
+  const g=d.el.cloneNode(true);g.classList.add("ghost");g.classList.remove("active","lift");g.style.width=r.width+"px";g.removeAttribute("tabindex");
+  document.body.append(g);d.ghost=g;d.el.classList.remove("lift");d.el.classList.add("placeholder");d.from=st(d.id);
+  document.body.classList.add("dragging");try{navigator.vibrate?.(8)}catch(_){}
+  moveDrag(x,y);
+}
+function moveDrag(x,y){
+  const d=drag;d.lx=x;d.ly=y;
+  d.ghost.style.transform=`translate(${x-d.ox}px,${y-d.oy}px) rotate(1.5deg)`;
+  const col=document.elementFromPoint(x,y)?.closest(".col");
+  document.querySelectorAll(".col.over").forEach(c=>c!==col&&c.classList.remove("over"));
+  if(col&&col.dataset.col!==d.from)col.classList.add("over");
+  d.over=col?.dataset.col||null;
+  autoScroll();
+}
+function autoScroll(){
+  const d=drag;if(!d?.active)return;cancelAnimationFrame(d.raf);
+  const B=$("board"),r=B.getBoundingClientRect(),E=56;let dx=0,dy=0;
+  if(d.lx<r.left+E)dx=-Math.ceil((r.left+E-d.lx)/4);else if(d.lx>r.right-E)dx=Math.ceil((d.lx-(r.right-E))/4);
+  if(d.ly<E)dy=-Math.ceil((E-d.ly)/4);else if(d.ly>innerHeight-E)dy=Math.ceil((d.ly-(innerHeight-E))/4);
+  if(dx||dy){B.scrollLeft+=dx;scrollBy(0,dy);d.raf=requestAnimationFrame(()=>{if(drag?.active)moveDrag(d.lx,d.ly)})}
+}
+function finishDrag(drop){
+  const d=drag;drag=null;if(!d)return;clearTimeout(d.timer);cancelAnimationFrame(d.raf);
+  d.el.classList.remove("lift");
+  if(!d.active)return;
+  d.ghost.remove();d.el.classList.remove("placeholder");document.body.classList.remove("dragging");
+  document.querySelectorAll(".col.over").forEach(c=>c.classList.remove("over"));
+  suppressClick=true;setTimeout(()=>suppressClick=false,0);
+  if(drop&&d.over&&d.over!==d.from){save(d.id,{stage:d.over},{redrawDrawer:d.id===openId});toast(`Moved to ${LABEL[d.over]}`)}
+}
+document.addEventListener("pointerdown",e=>{
+  const el=e.target.closest(".card");if(!el||!canWrite||e.button>0||drag)return;
+  drag={el,id:el.dataset.id,x:e.clientX,y:e.clientY,pid:e.pointerId,touch:e.pointerType!=="mouse",active:false};
+  if(drag.touch){el.classList.add("lift");drag.timer=setTimeout(()=>startDrag(drag.x,drag.y),300)}
+});
+document.addEventListener("pointermove",e=>{
+  const d=drag;if(!d||e.pointerId!==d.pid)return;
+  if(!d.active){const dist=Math.hypot(e.clientX-d.x,e.clientY-d.y);
+    if(d.touch){if(dist>8){d.el.classList.remove("lift");clearTimeout(d.timer);drag=null}return}
+    if(dist<5)return;startDrag(e.clientX,e.clientY);return}
+  moveDrag(e.clientX,e.clientY);
+});
+document.addEventListener("pointerup",e=>{if(drag&&e.pointerId===drag.pid)finishDrag(true)});
+document.addEventListener("pointercancel",e=>{if(drag&&e.pointerId===drag.pid&&!drag.active)finishDrag(false)});
+document.addEventListener("touchmove",e=>{if(drag?.active)e.preventDefault()},{passive:false});
+document.addEventListener("touchend",e=>{if(drag?.active)finishDrag(true)});
+document.addEventListener("contextmenu",e=>{if(e.target.closest(".card"))e.preventDefault()});
+
 document.addEventListener("keydown",e=>{
   if(!$("menu").hidden){
     const items=[...$("menu").children],i=items.indexOf(document.activeElement);
@@ -465,6 +586,7 @@ document.addEventListener("keydown",e=>{
   const typing=/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName||"")||document.querySelector("dialog[open]");
   if(e.key==="Escape"&&openId&&!document.querySelector("dialog[open]")){close();return}
   if(typing)return;
+  if(e.key==="Enter"&&document.activeElement?.classList.contains("card")){open(document.activeElement.dataset.id);return}
   if(e.key==="/"){e.preventDefault();$("q").focus();return}
   if(openId&&/^[1-6]$/.test(e.key)&&canWrite){save(openId,{stage:STAGES[+e.key-1][0]});return}
   if(e.key==="j"||e.key==="ArrowDown"||e.key==="k"||e.key==="ArrowUp"){
