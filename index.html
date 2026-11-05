@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Outreach tracker for finding a work-practice placement in Helsinki-region IT companies.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230A0A0A'/%3E%3Cpath d='M9 22V10h8a4 4 0 010 8H9' fill='none' stroke='white' stroke-width='3'/%3E%3C/svg%3E">
+<title>Harjoittelu Pipeline</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: top bar, stat strip, stage tabs, toolbar, table; details open in a right-side drawer */
+:root{
+  --bg:#FFFFFF; --subtle:#FAFAFA; --fg:#0A0A0A; --fg2:#404040; --muted:#737373; --line:#E5E5E5; --line2:#F0F0F0; --sel:#F5F5F5;
+  --amber:#B45309; --red:#B91C1C;
+  --b-new:#F4F4F5; --t-new:#52525B; --b-sent:#EFF6FF; --t-sent:#1D4ED8; --b-replied:#F5F3FF; --t-replied:#6D28D9;
+  --b-interview:#FFFBEB; --t-interview:#B45309; --b-accepted:#F0FDF4; --t-accepted:#15803D; --b-declined:#FEF2F2; --t-declined:#B91C1C;
+  --shadow:0 8px 30px rgba(0,0,0,.08);
+  --sans:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  color-scheme:light;
+}
+:root[data-mode="dark"]{
+  --bg:#0A0A0A; --subtle:#111111; --fg:#EDEDED; --fg2:#C7C7C7; --muted:#8F8F8F; --line:#262626; --line2:#1C1C1C; --sel:#171717;
+  --amber:#F59E0B; --red:#F87171;
+  --b-new:#1F1F23; --t-new:#A1A1AA; --b-sent:#172554; --t-sent:#93C5FD; --b-replied:#2E1065; --t-replied:#C4B5FD;
+  --b-interview:#451A03; --t-interview:#FCD34D; --b-accepted:#052E16; --t-accepted:#86EFAC; --b-declined:#450A0A; --t-declined:#FCA5A5;
+  --shadow:0 8px 30px rgba(0,0,0,.5); color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:14px/1.5 var(--sans);margin:0;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--fg);outline-offset:2px}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+svg{width:16px;height:16px;flex:none}
+
+/* top bar */
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:20px}
+.brand{display:flex;align-items:baseline;gap:10px;min-width:0}
+h1{font-size:16px;font-weight:600;margin:0;letter-spacing:-.01em}
+.sync{font:12px var(--mono);color:var(--muted)}
+.actions{display:flex;gap:6px;align-items:center}
+.icon{width:32px;height:32px;display:grid;place-items:center;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg2)}
+.icon:hover{background:var(--subtle);color:var(--fg)}
+.btn{height:32px;padding:0 12px;border-radius:6px;border:1px solid var(--fg);background:var(--fg);color:var(--bg);font-weight:500;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{opacity:.88}
+.btn2{height:32px;padding:0 12px;border-radius:6px;border:1px solid var(--line);background:var(--bg);font-weight:500;display:inline-flex;align-items:center;gap:6px;color:var(--fg)}
+.btn2:hover{background:var(--subtle)}
+.btn2:disabled,.btn:disabled{opacity:.45;cursor:default}
+
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--line);border-radius:8px}
+.stat{padding:14px 16px;border-left:1px solid var(--line);background:none;border-top:0;border-right:0;border-bottom:0;text-align:left}
+.stat:first-child{border-left:0}
+.stat dt{font-size:12px;color:var(--muted)}
+.stat dd{margin:2px 0 0;font:500 22px/1.2 var(--mono);letter-spacing:-.02em}
+.stat dd small{font-size:13px;color:var(--muted);letter-spacing:0}
+button.stat{cursor:pointer}
+button.stat:hover{background:var(--subtle)}
+button.stat[aria-pressed="true"] dd{color:var(--amber)}
+
+/* tabs + toolbar */
+.tabs{display:flex;gap:20px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--line);margin-top:24px}
+.tab{background:none;border:0;padding:8px 0 10px;color:var(--muted);white-space:nowrap;border-bottom:2px solid transparent;margin-bottom:-1px;display:flex;gap:6px;align-items:baseline}
+.tab:hover{color:var(--fg)}
+.tab[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--fg)}
+.tab .n{font:12px var(--mono);color:var(--muted)}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;padding-block:14px}
+.field{height:32px;border:1px solid var(--line);border-radius:6px;background:var(--bg);padding:0 10px}
+.search{flex:1 1 240px;min-width:0;display:flex;align-items:center;gap:8px;color:var(--muted)}
+.search input{border:0;background:none;outline:0;flex:1;min-width:0;color:var(--fg);height:100%}
+.search input::placeholder{color:var(--muted)}
+.search:focus-within{border-color:var(--fg)}
+kbd{font:11px var(--mono);color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:0 5px}
+.toggle{color:var(--muted)}
+.toggle[aria-pressed="true"]{color:var(--fg);border-color:var(--fg)}
+
+/* table */
+.table{border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:64px}
+.tr{display:grid;grid-template-columns:minmax(0,1fr) 56px 130px 92px 92px;gap:16px;align-items:center;padding:0 16px;min-height:52px;border-top:1px solid var(--line2)}
+.th{min-height:36px;font-size:12px;color:var(--muted);background:var(--subtle);border-top:0;border-bottom:1px solid var(--line)}
+.th .r,.tr .r{text-align:right}
+.row{cursor:pointer}
+.row:hover{background:var(--subtle)}
+.row.active{background:var(--sel)}
+.th + .row{border-top:0}
+.co{min-width:0;padding-block:8px}
+.co b{font-weight:500;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.co .sub{font-size:12px;color:var(--muted);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hire{color:var(--fg2)}
+.fit{font:13px var(--mono);text-align:right;color:var(--fg2)}
+.dt{font:12px var(--mono);color:var(--muted);text-align:right}
+.due{color:var(--amber)}
+.pill{border:0;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:500;max-width:100%;justify-self:start;display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.pill:disabled{cursor:default}
+.s-new{background:var(--b-new);color:var(--t-new)} .s-sent{background:var(--b-sent);color:var(--t-sent)}
+.s-replied{background:var(--b-replied);color:var(--t-replied)} .s-interview{background:var(--b-interview);color:var(--t-interview)}
+.s-accepted{background:var(--b-accepted);color:var(--t-accepted)} .s-declined{background:var(--b-declined);color:var(--t-declined)}
+.empty{padding:56px 16px;text-align:center;color:var(--muted)}
+
+/* drawer */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.18);z-index:30}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(480px,100vw);background:var(--bg);border-left:1px solid var(--line);box-shadow:var(--shadow);z-index:31;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);padding-right:env(safe-area-inset-right,0px)}
+.dh{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px 24px 16px;border-bottom:1px solid var(--line)}
+.dh h2{font-size:18px;font-weight:600;margin:0;letter-spacing:-.01em}
+.dh p{margin:2px 0 0;color:var(--muted);font-size:13px}
+.db{overflow-y:auto;padding:20px 24px 32px;display:grid;gap:24px}
+.sec{display:grid;gap:8px}
+.lbl{font-size:12px;color:var(--muted)}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:4px 12px;font-size:12px;font-weight:500;color:var(--fg2)}
+.seg button:hover{border-color:var(--muted)}
+.seg button[aria-pressed="true"]{border-color:transparent}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.date{width:100%;font:13px var(--mono)}
+.links{display:flex;flex-wrap:wrap;gap:8px}
+.links a{text-decoration:none}
+.text{color:var(--fg2);margin:0}
+.contact{display:flex;align-items:center;justify-content:space-between;gap:8px;border:1px solid var(--line);border-radius:6px;padding:8px 10px}
+.contact span{overflow-wrap:anywhere;min-width:0}
+.link{background:none;border:0;padding:0;color:var(--muted);font-size:12px;white-space:nowrap}
+.link:hover{color:var(--fg)}
+.msg{border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.msg-h{display:flex;justify-content:space-between;align-items:center;padding:6px 6px 6px 12px;border-bottom:1px solid var(--line);background:var(--subtle)}
+.lang{display:flex;gap:2px}
+.lang button{border:0;background:none;padding:3px 8px;border-radius:4px;font-size:12px;color:var(--muted)}
+.lang button[aria-pressed="true"]{background:var(--bg);color:var(--fg);box-shadow:0 0 0 1px var(--line)}
+.msg-b{padding:12px;white-space:pre-wrap;font-size:13px;color:var(--fg2);max-height:240px;overflow-y:auto}
+.msg-b strong{color:var(--fg);font-weight:500}
+.msg-f{display:flex;gap:8px;padding:10px 12px;border-top:1px solid var(--line);flex-wrap:wrap}
+textarea{width:100%;min-height:96px;resize:vertical;border:1px solid var(--line);border-radius:6px;background:var(--bg);padding:8px 10px;line-height:1.5}
+textarea:focus,.field:focus{outline:0;border-color:var(--fg)}
+.log{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.log li{display:flex;justify-content:space-between;gap:12px;font-size:13px;color:var(--fg2)}
+.log time{font:12px var(--mono);color:var(--muted)}
+.muted{color:var(--muted);font-size:12px;margin:0}
+.danger{color:var(--red)}
+
+/* dropdowns */
+.dd{display:inline-flex;align-items:center;gap:8px;color:var(--fg)}
+.dd::after,.pill::after{content:"";width:6px;height:6px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:translateY(-2px) rotate(45deg);opacity:.55}
+.dd[aria-expanded="true"]{border-color:var(--fg)}
+.menu{position:fixed;z-index:50;min-width:168px;background:var(--bg);border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);padding:4px;display:grid}
+.menu button{border:0;background:none;text-align:left;padding:7px 10px 7px 28px;border-radius:5px;font-size:13px;position:relative;color:var(--fg)}
+.menu button:hover,.menu button:focus-visible{background:var(--subtle);outline:0}
+.menu button[aria-checked="true"]::before{content:"";position:absolute;left:11px;top:50%;width:4px;height:8px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:translateY(-65%) rotate(45deg)}
+
+/* dialogs */
+dialog{border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--fg);padding:0;width:min(520px,calc(100vw - 32px));box-shadow:var(--shadow)}
+dialog::backdrop{background:rgba(0,0,0,.25)}
+dialog form{display:grid;gap:14px;padding:20px}
+dialog h3{font-size:16px;font-weight:600;margin:0}
+dialog label{display:grid;gap:4px;font-size:12px;color:var(--muted)}
+dialog .field{width:100%;color:var(--fg)}
+dialog textarea{min-height:160px;font-size:13px}
+.foot{display:flex;justify-content:flex-end;gap:8px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:8px 14px;border-radius:6px;font-size:13px;z-index:40}
+
+@media (max-width:760px){
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .stat:nth-child(3){border-left:0}
+  .stat:nth-child(n+3){border-top:1px solid var(--line)}
+  .tr{grid-template-columns:minmax(0,1fr) auto;gap:10px;padding:0 12px}
+  .th{display:none}
+  .fit,.dt{display:none}
+  .two{grid-template-columns:1fr}
+  .dh,.db{padding-left:20px;padding-right:20px}
+  .hide-sm{display:none}
+}
+@media (prefers-reduced-motion:no-preference){.drawer{animation:in .18s ease-out}@keyframes in{from{transform:translateX(16px);opacity:0}}}
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <div class="top">
+    <div class="brand"><h1>Pipeline</h1><span class="sync" id="sync"></span></div>
+    <div class="actions">
+      <button class="icon" id="exportBtn" type="button" title="Export CSV" aria-label="Export CSV"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg></button>
+      <button class="icon" id="settingsBtn" type="button" title="Profile and templates" aria-label="Profile and templates"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg></button>
+      <button class="icon" id="modeBtn" type="button" title="Theme" aria-label="Toggle theme"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg></button>
+      <button class="btn" id="addBtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span class="hide-sm">Add company</span></button>
+    </div>
+  </div>
+
+  <dl class="stats" id="stats"></dl>
+  <div class="tabs" id="tabs" role="tablist"></div>
+
+  <div class="toolbar">
+    <label class="field search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="q" type="search" placeholder="Search companies" aria-label="Search"><kbd class="hide-sm">/</kbd></label>
+    <button class="field dd" type="button" data-menu="prio" aria-haspopup="menu" aria-expanded="false"></button>
+    <button class="field dd" type="button" data-menu="city" aria-haspopup="menu" aria-expanded="false"></button>
+    <button class="field toggle" id="hiring" type="button" aria-pressed="false">Hiring now</button>
+    <button class="field dd" type="button" data-menu="sort" aria-haspopup="menu" aria-expanded="false"></button>
+  </div>
+
+  <div class="table" id="table" role="list"></div>
+</div>
+
+<div id="drawerRoot"></div>
+<div class="menu" id="menu" role="menu" hidden></div>
+
+<dialog id="addDlg"><form id="addForm">
+  <h3>Add company</h3>
+  <label>Name<input class="field" id="a-name" required autocomplete="off"></label>
+  <div class="two"><label>City<input class="field" id="a-city" value="Helsinki"></label>
+  <label>Priority<select class="field" id="a-prio"><option>A</option><option selected>B</option><option>C</option></select></label></div>
+  <label>Website<input class="field" id="a-site" placeholder="company.fi"></label>
+  <label>Contact<input class="field" id="a-contact" placeholder="Email or person"></label>
+  <label>Why it fits<input class="field" id="a-why"></label>
+  <div class="foot"><button class="btn2" type="button" data-close>Cancel</button><button class="btn" type="submit">Add</button></div>
+</form></dialog>
+
+<dialog id="setDlg"><form id="setForm">
+  <h3>Profile and templates</h3>
+  <div class="two"><label>Name<input class="field" id="p-name"></label><label>Email<input class="field" id="p-email" type="email"></label></div>
+  <div class="two"><label>Phone<input class="field" id="p-phone"></label><label>Portfolio / GitHub<input class="field" id="p-link"></label></div>
+  <label>English template<textarea id="p-en"></textarea></label>
+  <label>Finnish template<textarea id="p-fi"></textarea></label>
+  <p class="muted">Variables: {company} {name} {email} {phone} {link}. First line starting with “Subject:” becomes the subject.</p>
+  <div class="sec"><span class="lbl">Data is stored in this browser</span>
+    <div class="links"><button class="btn2" type="button" id="bkExport">Download backup</button><label class="btn2" for="bkFile" style="cursor:pointer">Restore backup</label><input type="file" id="bkFile" accept="application/json" hidden><button class="btn2 danger" type="button" id="bkReset">Reset</button></div></div>
+  <div class="foot"><button class="btn2" type="button" data-close>Cancel</button><button class="btn" type="submit">Save</button></div>
+</form></dialog>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>
+const COMPANIES = [{"id": "advaun-oy", "name": "Advaun Oy", "city": "Espoo / Helsinki", "type": "Manufacturing software + AI", "why": "Posted junior/intern (Rust + AI) and full-stack roles", "site": "(via Työmarkkinatori/LinkedIn)", "contact": "LinkedIn: Advaun Oy; CTO Dr. Hanwei Li", "careers": "Duunitori / Työmarkkinatori", "verified": false, "prio": "A", "source": "Initial search (company websites, Clutch, Integrify)", "score": 100}, {"id": "almaco", "name": "Almaco", "city": "Helsinki", "type": "Marine/offshore, in-house software", "why": "Hiring Junior Developer: TypeScript/React/Node/PostgreSQL + AI coding tools — exact match", "site": "almaco.cc", "contact": "via Academic Work (recruiter)", "careers": "Jobly: Junior Developer, Almaco", "verified": false, "prio": "A", "source": "Jobly / Academic Work", "score": 100}, {"id": "aitomation-oy", "name": "Aitomation Oy", "city": "Espoo", "type": "AI agents", "why": "Hired a Junior AI Agent Developer — matches your profile", "site": "(via Duunitori)", "contact": "Duunitori: Aitomation Oy", "careers": "Duunitori", "verified": false, "prio": "A", "source": "Initial search (company websites, Clutch, Integrify)", "score": 96}, {"id": "haiilo", "name": "Haiilo", "city": "Helsinki", "type": "Employee comms SaaS", "why": "Has hired Junior Frontend Engineers", "site": "haiilo.com", "contact": "see website", "careers": "haiilo.com (careers)", "verified": false, "prio": "A", "source": "Job board listing (glich.co)", "score": 95}, {"id": "academic-work-finland", "name": "Academic Work Finland", "city": "Helsinki", "type": "Recruitment agency for juniors/students", "why": "Recruits juniors for Almaco, Avain and others; register as a candidate", "site": "academicwork.fi", "contact": "see website", "careers": "academicwork.fi (jobs)", "verified": false, "prio": "A", "source": "Duunitori, Nov 2026", "score": 90}, {"id": "sy-p-j-rjest-t-cancer-society-of-finland", "name": "Syöpäjärjestöt (Cancer Society of Finland)", "city": "Helsinki", "type": "Non-profit, in-house dev team", "why": "Hiring Junior Full Stack Developer now — Finnish-speaking environment", "site": "cancersociety.fi", "contact": "see website", "careers": "Duunitori: Junior Full Stack Developer", "verified": false, "prio": "A", "source": "Duunitori, Nov 2026", "score": 90}, {"id": "fraktio", "name": "Fraktio", "city": "Helsinki", "type": "Web/mobile agency", "why": "AI-native development with coding agents; web + mobile", "site": "fraktio.fi", "contact": "Kluuvikatu 5, Helsinki; Tea Grönfors +358 40 710 8694 (sales); contact form", "careers": "fraktio.fi/rekry", "verified": true, "prio": "A", "source": "Initial search (company websites, Clutch, Integrify)", "score": 89}, {"id": "avain-vuokra-asunnot", "name": "Avain Vuokra-asunnot", "city": "Helsinki", "type": "Rental housing, in-house digital", "why": "Hiring AI Fullstack Developer (via Academic Work)", "site": "avainasunnot.fi", "contact": "see website", "careers": "itduunit: AI Fullstack Developer", "verified": false, "prio": "A", "source": "itduunit.fi, Nov 2026", "score": 86}, {"id": "droppe", "name": "Droppe", "city": "Helsinki", "type": "B2B e-commerce marketplace", "why": "Has hired Frontend Developers", "site": "droppe.com", "contact": "see website", "careers": "theorg.com: Droppe jobs", "verified": false, "prio": "A", "source": "theorg.com listing", "score": 85}, {"id": "trainify-reqruitz", "name": "Trainify (reQruitz)", "city": "Helsinki", "type": "Training mobile app", "why": "Was looking for a developer (Indeed)", "site": "(via Indeed / reQruitz)", "contact": "via reQruitz", "careers": "Indeed", "verified": false, "prio": "A", "source": "Initial search (company websites, Clutch, Integrify)", "score": 80}, {"id": "qvik", "name": "Qvik", "city": "Helsinki", "type": "Digital product house", "why": "Web, mobile, AI; 150+ people", "site": "qvik.com", "contact": "Urho Kekkosen katu 5c; robert.seege@qvik.com (sales); contact form", "careers": "qvik.com/careers", "verified": true, "prio": "A", "source": "Initial search (company websites, Clutch, Integrify)", "score": 79}, {"id": "taiste", "name": "Taiste", "city": "Helsinki", "type": "Digital product (UX/UI + dev)", "why": "Web/mobile + AI solutions, accepts open applications", "site": "taiste.fi", "contact": "vilma.merikanto@taiste.com (general); HR Lead Niina Haukka +358 44 719 9804; Kansakoulukatu 1 B", "careers": "taiste.fi/en/careers", "verified": true, "prio": "A", "source": "Initial search (company websites, Clutch, Integrify)", "score": 79}, {"id": "nvelop", "name": "Nvelop", "city": "Helsinki", "type": "AI procurement SaaS", "why": "Early-stage AI SaaS", "site": "nvelop.ai", "contact": "see website", "careers": "—", "verified": false, "prio": "A", "source": "VCBacked: funded Helsinki startups 2026", "score": 76}, {"id": "renow", "name": "Renow", "city": "Helsinki", "type": "AI recommerce platform", "why": "Early-stage AI SaaS", "site": "renow.ai", "contact": "see website", "careers": "—", "verified": false, "prio": "A", "source": "VCBacked: funded Helsinki startups 2026", "score": 76}, {"id": "alfame", "name": "Alfame", "city": "Helsinki", "type": "Software development / data", "why": "Finnish software company, .NET/React/Azure", "site": "alfame.com", "contact": "myynti@alfame.com; 050 448 1178; contact form", "careers": "alfame.com/ura", "verified": true, "prio": "A", "source": "Initial search (company websites, Clutch, Integrify)", "score": 73}, {"id": "druid", "name": "Druid", "city": "Helsinki", "type": "Web agency (Drupal + JS)", "why": "Web services, JavaScript frontend", "site": "druid.fi", "contact": "info@druid.fi; +358 20 187 6602; Pasilankatu 2", "careers": "careers.druid.fi", "verified": true, "prio": "A", "source": "Initial search (company websites, Clutch, Integrify)", "score": 73}, {"id": "evermade", "name": "Evermade", "city": "Helsinki", "type": "Design & tech agency", "why": "Finland's largest WordPress agency; web, e-commerce", "site": "evermade.fi", "contact": "form at evermade.fi/contact", "careers": "evermade.fi/about/careers", "verified": true, "prio": "A", "source": "Initial search (company websites, Clutch, Integrify)", "score": 73}, {"id": "exove", "name": "Exove", "city": "Helsinki", "type": "Web/e-commerce agency", "why": "Websites, e-commerce, integrations", "site": "exove.com", "contact": "HR: viivi.kuismala@exove.com, +358 50 475 5385; Porkkalankatu 20a B", "careers": "exove.com/careers", "verified": true, "prio": "A", "source": "Initial search (company websites, Clutch, Integrify)", "score": 73}, {"id": "melvin-agency", "name": "Melvin Agency", "city": "Helsinki", "type": "Software development (2–10 people)", "why": "Small team, says openly they are looking for developers", "site": "melvin.fi", "contact": "info@melvin.fi; hiring: juha@melvin.fi; Juha Aittamaa 050 357 7547", "careers": "melvin.fi/#rekry", "verified": true, "prio": "A", "source": "Initial search (company websites, Clutch, Integrify)", "score": 73}, {"id": "promorepublic", "name": "PromoRepublic", "city": "Helsinki", "type": "AI marketing platform", "why": "Web SaaS (Ukrainian founders)", "site": "promorepublic.com", "contact": "see website", "careers": "—", "verified": false, "prio": "A", "source": "VCBacked: funded Helsinki startups 2026", "score": 71}, {"id": "retailgrid", "name": "Retailgrid", "city": "Helsinki", "type": "AI data workspace for retail", "why": "Early-stage, small team", "site": "retailgrid.io", "contact": "see website", "careers": "—", "verified": false, "prio": "A", "source": "VCBacked: funded Helsinki startups 2026", "score": 71}, {"id": "serviceform", "name": "Serviceform", "city": "Helsinki", "type": "AI chat/forms", "why": "AI + web widgets", "site": "serviceform.com", "contact": "see website", "careers": "—", "verified": false, "prio": "A", "source": "Initial search (company websites, Clutch, Integrify)", "score": 71}, {"id": "visma-severa", "name": "Visma Severa", "city": "Helsinki", "type": "PSA SaaS", "why": "Was hiring Full-Stack Developer (AI)", "site": "visma.fi", "contact": "see website", "careers": "visma.fi (careers)", "verified": false, "prio": "B", "source": "Initial search (company websites, Clutch, Integrify)", "score": 71}, {"id": "buutti", "name": "Buutti", "city": "Helsinki", "type": "Software consultancy + training", "why": "Runs IT retraining, used to working with juniors", "site": "buutti.com", "contact": "see website", "careers": "buutti.com (careers)", "verified": false, "prio": "A", "source": "Initial search (company websites, Clutch, Integrify)", "score": 70}, {"id": "loop4", "name": "Loop4", "city": "Helsinki", "type": "Web/SaaS development (2–10 people)", "why": "Small web studio, SaaS applications", "site": "loop4.fi", "contact": "contact form / LinkedIn Loop4", "careers": "—", "verified": false, "prio": "A", "source": "Initial search (company websites, Clutch, Integrify)", "score": 70}, {"id": "munchi", "name": "Munchi", "city": "Helsinki", "type": "Restaurant ordering platform", "why": "Early-stage web platform", "site": "gomunchi.com", "contact": "see website", "careers": "—", "verified": false, "prio": "A", "source": "VCBacked: funded Helsinki startups 2026", "score": 70}, {"id": "relex-solutions", "name": "RELEX Solutions", "city": "Helsinki", "type": "Supply chain SaaS", "why": "Large R&D, junior hiring", "site": "relexsolutions.com", "contact": "see website", "careers": "relexsolutions.com/careers", "verified": false, "prio": "B", "source": "Initial search (company websites, Clutch, Integrify)", "score": 70}, {"id": "sininen-meteoriitti", "name": "Sininen Meteoriitti", "city": "Helsinki", "type": "Web agency", "why": "Websites and web services, small team", "site": "sininenmeteoriitti.fi", "contact": "see website", "careers": "—", "verified": false, "prio": "A", "source": "Initial search (company websites, Clutch, Integrify)", "score": 70}, {"id": "thril", "name": "Thril", "city": "Helsinki", "type": "Online booking platform", "why": "Small web team", "site": "thril.fi", "contact": "see website", "careers": "—", "verified": false, "prio": "A", "source": "VCBacked: funded Helsinki startups 2026", "score": 70}, {"id": "thriv", "name": "Thriv", "city": "Helsinki", "type": "Web development + cloud", "why": "Small team, Vuorikatu 14", "site": "(Clutch profile)", "contact": "+358 40 846 1320 (per Clutch)", "careers": "—", "verified": false, "prio": "A", "source": "Initial search (company websites, Clutch, Integrify)", "score": 70}, {"id": "integrify", "name": "Integrify", "city": "Helsinki", "type": "Tech talent platform for immigrants", "why": "Free Talent Pool, 200+ partner companies", "site": "integrify.io", "contact": "Talent Pool form on website", "careers": "integrify.io/discover/talent-pool", "verified": true, "prio": "A", "source": "Initial search (company websites, Clutch, Integrify)", "score": 68}, {"id": "avrea", "name": "Avrea", "city": "Helsinki", "type": "CI/CD for AI-era development", "why": "Dev tooling for AI-native dev — fits your AI workflow", "site": "avrea.com", "contact": "see website", "careers": "—", "verified": false, "prio": "A", "source": "VCBacked: funded Helsinki startups 2026", "score": 66}, {"id": "invian-oy-domacare", "name": "Invian Oy (DomaCare)", "city": "Helsinki", "type": "Home-care software", "why": "Hiring AI-driven Senior Operations Engineer", "site": "invian.fi", "contact": "see website", "careers": "Duunitori", "verified": false, "prio": "B", "source": "Duunitori, Nov 2026", "score": 66}, {"id": "kultakiertue-oy", "name": "Kultakiertue Oy", "city": "Helsinki", "type": "Retail (jewellery), in-house digital", "why": "Hiring Data & AI Automation Specialist", "site": "kultakeskus.fi", "contact": "see website", "careers": "Duunitori", "verified": false, "prio": "B", "source": "Duunitori, Nov 2026", "score": 66}, {"id": "skene", "name": "Skene", "city": "Helsinki", "type": "Growth tools for vibe-coders", "why": "AI dev-tool startup — fits your AI workflow", "site": "skene.ai", "contact": "see website", "careers": "—", "verified": false, "prio": "A", "source": "VCBacked: funded Helsinki AI startups 2026", "score": 66}, {"id": "taito-ai", "name": "Taito.ai", "city": "Helsinki", "type": "AI app development platform", "why": "AI application platform", "site": "taito.ai", "contact": "see website", "careers": "—", "verified": false, "prio": "A", "source": "VCBacked: funded Helsinki AI startups 2026", "score": 66}, {"id": "vivicta", "name": "Vivicta", "city": "Espoo", "type": "IT services", "why": "Hired AI SW Engineer (UI/dashboards for AI)", "site": "(via Duunitori)", "contact": "Duunitori: Vivicta Oy", "careers": "Duunitori", "verified": false, "prio": "B", "source": "Initial search (company websites, Clutch, Integrify)", "score": 66}, {"id": "aibidia", "name": "Aibidia", "city": "Helsinki", "type": "Tax SaaS", "why": "Hired developers via Integrify", "site": "aibidia.com", "contact": "see website", "careers": "—", "verified": false, "prio": "B", "source": "Initial search (company websites, Clutch, Integrify)", "score": 65}, {"id": "ambientia", "name": "Ambientia", "city": "Helsinki", "type": "Web/integrations", "why": "Web services, Atlassian, integrations", "site": "ambientia.fi", "contact": "see website", "careers": "ambientia.fi (rekry)", "verified": false, "prio": "A", "source": "Initial search (company websites, Clutch, Integrify)", "score": 65}, {"id": "avidly", "name": "Avidly", "city": "Helsinki", "type": "HubSpot/marketing tech", "why": "Web, HubSpot development", "site": "avidlyagency.com", "contact": "see website", "careers": "—", "verified": false, "prio": "A", "source": "Initial search (company websites, Clutch, Integrify)", "score": 65}, {"id": "crasman", "name": "Crasman", "city": "Helsinki", "type": "Web/CMS (Stage)", "why": "Own CMS, websites for large clients", "site": "crasman.fi", "contact": "see website", "careers": "—", "verified": false, "prio": "A", "source": "Initial search (company websites, Clutch, Integrify)", "score": 65}, {"id": "fennoa", "name": "Fennoa", "city": "(to check)", "type": "Accounting SaaS", "why": "Was hiring full-stack (Duunitori)", "site": "fennoa.com", "contact": "see website", "careers": "Duunitori", "verified": false, "prio": "B", "source": "Initial search (company websites, Clutch, Integrify)", "score": 65}, {"id": "frantic", "name": "Frantic", "city": "Helsinki", "type": "Digital agency", "why": "Web and digital services", "site": "frantic.com", "contact": "see website", "careers": "frantic.com (careers)", "verified": false, "prio": "A", "source": "Initial search (company websites, Clutch, Integrify)", "score": 65}, {"id": "geniem", "name": "Geniem", "city": "Helsinki", "type": "WordPress/web agency", "why": "Web development, many municipal projects", "site": "geniem.fi", "contact": "see website", "careers": "geniem.fi (rekry)", "verified": false, "prio": "A", "source": "Initial search (company websites, Clutch, Integrify)", "score": 65}, {"id": "hsl-helsinki-regional-transport", "name": "HSL (Helsinki Regional Transport)", "city": "Helsinki", "type": "Public transport, digital services", "why": "Hiring UI designer; large app/web team, Finnish environment", "site": "hsl.fi", "contact": "see website", "careers": "hsl.fi (rekry)", "verified": false, "prio": "B", "source": "Duunitori, Nov 2026", "score": 65}, {"id": "kaiku-helsinki", "name": "Kaiku Helsinki", "city": "Helsinki", "type": "Digital agency", "why": "Web and digital services", "site": "kaikuhelsinki.com", "contact": "see website", "careers": "—", "verified": false, "prio": "A", "source": "Initial search (company websites, Clutch, Integrify)", "score": 65}, {"id": "lamia", "name": "Lamia", "city": "Helsinki", "type": "Mobile/web development", "why": "Apps and web", "site": "lamia.fi", "contact": "see website", "careers": "—", "verified": false, "prio": "A", "source": "Initial search (company websites, Clutch, Integrify)", "score": 65}, {"id": "mediasignal", "name": "Mediasignal", "city": "Helsinki", "type": "Software development / web", "why": "Web technologies and service design", "site": "mediasignal.fi", "contact": "see website", "careers": "—", "verified": false, "prio": "A", "source": "Initial search (company websites, Clutch, Integrify)", "score": 65}, {"id": "motley-agency", "name": "Motley Agency", "city": "Helsinki", "type": "Web/portals (Liferay)", "why": "Portals and web development", "site": "motley.fi", "contact": "see website", "careers": "—", "verified": false, "prio": "A", "source": "Initial search (company websites, Clutch, Integrify)", "score": 65}, {"id": "nordcloud", "name": "Nordcloud", "city": "Helsinki", "type": "Cloud consultancy", "why": "Hired 10 full-stack devs from Integrify", "site": "nordcloud.com", "contact": "see website", "careers": "nordcloud.com/careers", "verified": false, "prio": "B", "source": "Initial search (company websites, Clutch, Integrify)", "score": 65}, {"id": "prenew", "name": "Prenew", "city": "Espoo", "type": "Used gaming PC marketplace", "why": "E-commerce web", "site": "prenewpc.com", "contact": "see website", "careers": "—", "verified": false, "prio": "A", "source": "VCBacked: funded Espoo startups", "score": 65}, {"id": "sangre", "name": "Sangre", "city": "Helsinki / Oulu", "type": "Full-stack, SaaS platforms", "why": "Full-stack web platforms", "site": "sangre.fi", "contact": "see website", "careers": "—", "verified": false, "prio": "A", "source": "Initial search (company websites, Clutch, Integrify)", "score": 65}, {"id": "treat-health", "name": "Treat Health", "city": "Helsinki", "type": "HealthTech", "why": "Full-stack (Elixir, LiveView, React), on-site Helsinki", "site": "treat.health", "contact": "see website", "careers": "treat.health/en/careers", "verified": false, "prio": "B", "source": "HN Who is hiring, Oct 2026", "score": 65}, {"id": "woolman", "name": "Woolman", "city": "Helsinki", "type": "Shopify agency", "why": "E-commerce frontend", "site": "woolman.io", "contact": "see website", "careers": "—", "verified": false, "prio": "A", "source": "Initial search (company websites, Clutch, Integrify)", "score": 65}, {"id": "wunder", "name": "Wunder", "city": "Helsinki", "type": "Web agency (Drupal/WordPress)", "why": "Historically hired Integrify graduates", "site": "wunder.io", "contact": "see website", "careers": "wunder.io (careers)", "verified": false, "prio": "B", "source": "Initial search (company websites, Clutch, Integrify)", "score": 65}, {"id": "wunderdog", "name": "Wunderdog", "city": "Helsinki", "type": "Software consultancy", "why": "Small team of strong developers", "site": "wunderdog.fi", "contact": "see website", "careers": "—", "verified": false, "prio": "A", "source": "Initial search (company websites, Clutch, Integrify)", "score": 65}, {"id": "zeroten", "name": "Zeroten", "city": "Helsinki", "type": "Web/marketing agency", "why": "Web development among its services", "site": "zeroten.fi", "contact": "see website", "careers": "—", "verified": false, "prio": "A", "source": "Initial search (company websites, Clutch, Integrify)", "score": 65}, {"id": "cityvarasto", "name": "Cityvarasto", "city": "Helsinki / Vantaa", "type": "Retail in-house IT team", "why": "Own digital services team", "site": "cityvarasto.fi", "contact": "see website", "careers": "Indeed / website", "verified": false, "prio": "A", "source": "Initial search (company websites, Clutch, Integrify)", "score": 60}, {"id": "finago", "name": "Finago", "city": "Espoo", "type": "Financial management software", "why": "Hiring data engineers; Finnish product company", "site": "finago.com", "contact": "see website", "careers": "Duunitori", "verified": false, "prio": "B", "source": "Duunitori, Nov 2026", "score": 60}, {"id": "holvi", "name": "Holvi", "city": "Helsinki", "type": "Fintech", "why": "Hired via Integrify Try & Hire", "site": "holvi.com", "contact": "see website", "careers": "holvi.com (careers)", "verified": false, "prio": "B", "source": "Initial search (company websites, Clutch, Integrify)", "score": 60}, {"id": "koka-oy", "name": "Koka Oy", "city": "Helsinki", "type": "Software company", "why": "Hiring Senior Full Stack (via aTalent) — shows a growing dev team", "site": "koka.fi", "contact": "see website", "careers": "itduunit: Senior Full Stack Developer", "verified": false, "prio": "B", "source": "itduunit.fi, Nov 2026", "score": 60}, {"id": "rantalainen", "name": "Rantalainen", "city": "Helsinki", "type": "Accounting + in-house IT", "why": "Hired developers via Integrify", "site": "rantalainen.fi", "contact": "see website", "careers": "—", "verified": false, "prio": "B", "source": "Initial search (company websites, Clutch, Integrify)", "score": 60}, {"id": "unikie", "name": "Unikie", "city": "Espoo", "type": "Software development", "why": "Hired Integrify graduates", "site": "unikie.com", "contact": "see website", "careers": "unikie.com (careers)", "verified": false, "prio": "B", "source": "Initial search (company websites, Clutch, Integrify)", "score": 60}, {"id": "maire", "name": "Maire", "city": "Helsinki", "type": "AI consumer-trend copilot", "why": "Small AI SaaS", "site": "maire.ai", "contact": "see website", "careers": "—", "verified": false, "prio": "B", "source": "VCBacked: funded Helsinki AI startups 2026", "score": 56}, {"id": "sizey", "name": "Sizey", "city": "Espoo", "type": "AI 3D body-measurement SaaS", "why": "Small AI SaaS", "site": "sizey.ai", "contact": "see website", "careers": "—", "verified": false, "prio": "B", "source": "VCBacked: funded Espoo startups", "score": 56}, {"id": "utopia-analytics", "name": "Utopia Analytics", "city": "Helsinki", "type": "AI moderation", "why": "AI SaaS, small team", "site": "utopiaanalytics.com", "contact": "see website", "careers": "—", "verified": false, "prio": "B", "source": "Initial search (company websites, Clutch, Integrify)", "score": 56}, {"id": "sitowise", "name": "Sitowise", "city": "Espoo", "type": "Smart city consultancy, digital solutions", "why": "Has run a NextGen software-dev trainee program (React/Angular/.NET); contact Niina Nieminen 045 657 8847 (2021 posting)", "site": "sitowise.com", "contact": "firstname.lastname@sitowise.com; Niina Nieminen 045 657 8847 (2021)", "careers": "sitowise.com (rekry)", "verified": false, "prio": "B", "source": "Itewiki (2021 trainee program)", "score": 55}, {"id": "blidz", "name": "Blidz", "city": "Helsinki", "type": "AI shopping platform", "why": "Integrify partner; web/app", "site": "blidz.com", "contact": "see website", "careers": "—", "verified": false, "prio": "B", "source": "VCBacked: funded Helsinki startups 2026", "score": 51}, {"id": "confidentialmind", "name": "ConfidentialMind", "city": "Espoo", "type": "Private AI platform", "why": "Pre-seed AI startup", "site": "(Seedtable profile)", "contact": "see website", "careers": "—", "verified": false, "prio": "B", "source": "Seedtable: Espoo SaaS/AI startups 2026", "score": 51}, {"id": "contractzen", "name": "ContractZen", "city": "Helsinki", "type": "AI governance platform", "why": "Web SaaS", "site": "contractzen.com", "contact": "see website", "careers": "—", "verified": false, "prio": "B", "source": "VCBacked: funded Helsinki AI startups 2026", "score": 51}, {"id": "futurice", "name": "Futurice", "city": "Helsinki", "type": "Digital consultancy", "why": "Large web/mobile/AI consultancy", "site": "futurice.com", "contact": "see website", "careers": "futurice.com/careers", "verified": false, "prio": "B", "source": "Initial search (company websites, Clutch, Integrify)", "score": 51}, {"id": "gosta-labs", "name": "Gosta Labs", "city": "Espoo", "type": "AI/SaaS startup", "why": "Seed-stage, Seedtable top Espoo AI", "site": "(Seedtable profile)", "contact": "see website", "careers": "—", "verified": false, "prio": "B", "source": "Seedtable: Espoo SaaS/AI startups 2026", "score": 51}, {"id": "inven", "name": "Inven", "city": "Helsinki", "type": "AI B2B SaaS for M&A", "why": "Growing SaaS", "site": "inven.ai", "contact": "see website", "careers": "—", "verified": false, "prio": "B", "source": "VCBacked: funded Helsinki AI startups 2026", "score": 51}, {"id": "komu-homes", "name": "Komu Homes", "city": "Helsinki", "type": "AI property management", "why": "Early-stage proptech", "site": "komuhomes.com", "contact": "see website", "careers": "—", "verified": false, "prio": "B", "source": "VCBacked: funded Helsinki startups 2026", "score": 51}, {"id": "realm", "name": "Realm", "city": "Helsinki", "type": "AI company knowledge interface", "why": "Small AI startup", "site": "withrealm.com", "contact": "see website", "careers": "—", "verified": false, "prio": "B", "source": "VCBacked: funded Helsinki AI startups 2026", "score": 51}, {"id": "revieve", "name": "Revieve", "city": "Helsinki", "type": "Beauty-tech AI SaaS", "why": "Hiring product engineers", "site": "revieve.com", "contact": "see website", "careers": "—", "verified": false, "prio": "C", "source": "HN Who is hiring, Oct 2026", "score": 51}, {"id": "siili-solutions", "name": "Siili Solutions", "city": "Helsinki", "type": "Digital consultancy", "why": "Web, AI, data", "site": "siili.com", "contact": "see website", "careers": "siili.com (careers)", "verified": false, "prio": "B", "source": "Initial search (company websites, Clutch, Integrify)", "score": 51}, {"id": "solita", "name": "Solita", "city": "Helsinki", "type": "Data/AI/web consultancy", "why": "AI and development", "site": "solita.fi", "contact": "see website", "careers": "solita.fi (careers)", "verified": false, "prio": "B", "source": "Initial search (company websites, Clutch, Integrify)", "score": 51}, {"id": "upright-project", "name": "Upright Project", "city": "Helsinki", "type": "Impact data + AI", "why": "Small product team", "site": "uprightproject.com", "contact": "see website", "careers": "—", "verified": false, "prio": "B", "source": "Initial search (company websites, Clutch, Integrify)", "score": 51}, {"id": "workfellow", "name": "Workfellow", "city": "Espoo", "type": "AI work-intelligence platform", "why": "AI SaaS", "site": "workfellow.ai", "contact": "see website", "careers": "—", "verified": false, "prio": "B", "source": "VCBacked: funded Espoo startups", "score": 51}, {"id": "city-of-espoo", "name": "City of Espoo", "city": "Espoo", "type": "City", "why": "Finnish-speaking environment, works with trainees", "site": "espoo.fi", "contact": "—", "careers": "espoo.fi (rekry)", "verified": false, "prio": "B", "source": "Initial search (company websites, Clutch, Integrify)", "score": 50}, {"id": "city-of-helsinki-digital", "name": "City of Helsinki (digital)", "city": "Helsinki", "type": "City — digital services", "why": "Open source, Finnish-speaking environment, takes trainees", "site": "hel.fi", "contact": "—", "careers": "hel.fi/rekry", "verified": false, "prio": "B", "source": "Initial search (company websites, Clutch, Integrify)", "score": 50}, {"id": "city-of-vantaa", "name": "City of Vantaa", "city": "Vantaa", "type": "City", "why": "Finnish-speaking environment, works with trainees", "site": "vantaa.fi", "contact": "—", "careers": "vantaa.fi (rekry)", "verified": false, "prio": "B", "source": "Initial search (company websites, Clutch, Integrify)", "score": 50}, {"id": "edudata", "name": "Edudata", "city": "Helsinki", "type": "GDPR app for education", "why": "Small SaaS", "site": "edudata.io", "contact": "see website", "careers": "—", "verified": false, "prio": "B", "source": "VCBacked: funded Helsinki startups 2026", "score": 50}, {"id": "groweo", "name": "Groweo", "city": "Helsinki", "type": "Business growth software", "why": "Small SaaS", "site": "groweo.com", "contact": "see website", "careers": "—", "verified": false, "prio": "B", "source": "VCBacked: funded Helsinki startups 2026", "score": 50}, {"id": "homie", "name": "Homie", "city": "Helsinki", "type": "B2B relationship-led growth", "why": "Early-stage SaaS", "site": "usehomie.com", "contact": "see website", "careers": "—", "verified": false, "prio": "B", "source": "VCBacked: funded Helsinki startups 2026", "score": 50}, {"id": "innopipe", "name": "Innopipe", "city": "Helsinki", "type": "Innovation management tool", "why": "Small SaaS", "site": "innopipe.ai", "contact": "see website", "careers": "—", "verified": false, "prio": "B", "source": "VCBacked: funded Helsinki AI startups 2026", "score": 50}, {"id": "kide-app", "name": "Kide.app", "city": "Helsinki", "type": "Ticketing", "why": "Web/mobile, young team", "site": "kide.app", "contact": "see website", "careers": "—", "verified": false, "prio": "B", "source": "Initial search (company websites, Clutch, Integrify)", "score": 50}, {"id": "seidat", "name": "Seidat", "city": "Helsinki", "type": "Sales presentation tool", "why": "Web product, small team", "site": "seidat.com", "contact": "see website", "careers": "—", "verified": false, "prio": "B", "source": "VCBacked: funded Helsinki startups 2026", "score": 50}, {"id": "userlens", "name": "Userlens", "city": "Helsinki", "type": "Customer feedback analytics", "why": "Small SaaS startup", "site": "userlens.io", "contact": "see website", "careers": "—", "verified": false, "prio": "B", "source": "VCBacked: funded Helsinki startups 2026", "score": 50}, {"id": "zevoy", "name": "Zevoy", "city": "Espoo", "type": "Expense management SaaS", "why": "Small fintech SaaS", "site": "zevoy.com", "contact": "see website", "careers": "—", "verified": false, "prio": "B", "source": "VCBacked: funded Espoo startups", "score": 50}, {"id": "alphasense-helsinki", "name": "AlphaSense Helsinki", "city": "Helsinki", "type": "AI market intelligence", "why": "Large Helsinki engineering office", "site": "alpha-sense.com", "contact": "—", "careers": "alpha-sense.com/careers", "verified": false, "prio": "C", "source": "itduunit.fi, Nov 2026", "score": 46}, {"id": "comparables-ai", "name": "Comparables.ai", "city": "Helsinki", "type": "AI M&A intelligence", "why": "Raised $6M seed — expanding product", "site": "comparables.ai", "contact": "LinkedIn: comparables-ai", "careers": "—", "verified": false, "prio": "B", "source": "ArcticStartup 2026", "score": 46}, {"id": "eficode", "name": "Eficode", "city": "Helsinki", "type": "DevOps/AI consultancy", "why": "DevOps, AI tooling", "site": "eficode.com", "contact": "see website", "careers": "eficode.com/careers", "verified": false, "prio": "B", "source": "Initial search (company websites, Clutch, Integrify)", "score": 46}, {"id": "fingrid", "name": "Fingrid", "city": "Helsinki", "type": "Energy (grid operator)", "why": "Hiring AI architect, test manager — Finnish environment", "site": "fingrid.fi", "contact": "—", "careers": "fingrid.fi (rekry)", "verified": false, "prio": "C", "source": "Duunitori, Nov 2026", "score": 46}, {"id": "sulava", "name": "Sulava", "city": "Espoo", "type": "Microsoft/AI consultancy", "why": "Copilot, AI, Power Platform", "site": "sulava.com", "contact": "see website", "careers": "sulava.com (careers)", "verified": false, "prio": "B", "source": "Initial search (company websites, Clutch, Integrify)", "score": 46}, {"id": "vincit", "name": "Vincit", "city": "Helsinki", "type": "Software consultancy", "why": "Largest AI software company in RevenueBase's list", "site": "vincit.com", "contact": "see website", "careers": "vincit.com (careers)", "verified": false, "prio": "B", "source": "Initial search (company websites, Clutch, Integrify)", "score": 46}, {"id": "zero", "name": "Zero", "city": "Helsinki", "type": "AI agents replacing CRM", "why": "Raised ~€9M seed Sep 2026 (Smartly co-founder) — growing team", "site": "(LinkedIn: Zero)", "contact": "LinkedIn", "careers": "—", "verified": false, "prio": "B", "source": "ArcticStartup / EU-Startups, Sep 2026", "score": 46}, {"id": "zure", "name": "Zure", "city": "Helsinki", "type": "Azure consultancy", "why": "Cloud, .NET, AI", "site": "zure.com", "contact": "see website", "careers": "zure.com (careers)", "verified": false, "prio": "B", "source": "Initial search (company websites, Clutch, Integrify)", "score": 46}, {"id": "agileday", "name": "Agileday", "city": "Helsinki / Espoo", "type": "Services automation SaaS", "why": "Raised €6.4M Jan 2026, web SaaS", "site": "agileday.com", "contact": "see website", "careers": "—", "verified": false, "prio": "B", "source": "VCBacked: funded Helsinki startups 2026", "score": 45}, {"id": "bahn-express", "name": "Bahn Express", "city": "Helsinki", "type": "Vehicle logistics platform", "why": "Web platform with instant pricing", "site": "bahnexpress.fi", "contact": "see website", "careers": "—", "verified": false, "prio": "B", "source": "VCBacked: funded Helsinki startups 2026", "score": 45}, {"id": "bitfactor", "name": "Bitfactor", "city": "Helsinki", "type": "Software consultancy", "why": "Full-stack projects", "site": "bitfactor.fi", "contact": "see website", "careers": "—", "verified": false, "prio": "B", "source": "Initial search (company websites, Clutch, Integrify)", "score": 45}, {"id": "craci", "name": "CRACI", "city": "Helsinki", "type": "EU Cyber Resilience Act compliance", "why": "Pre-seed, small team", "site": "craci.com", "contact": "see website", "careers": "—", "verified": false, "prio": "B", "source": "VCBacked: funded Helsinki startups 2026", "score": 45}, {"id": "duunitori", "name": "Duunitori", "city": "Helsinki", "type": "Job platform", "why": "Web product, Finnish-speaking environment", "site": "duunitori.fi", "contact": "see website", "careers": "duunitori.fi (rekry)", "verified": false, "prio": "B", "source": "Initial search (company websites, Clutch, Integrify)", "score": 45}, {"id": "emabler", "name": "eMabler", "city": "Helsinki", "type": "EV charging software", "why": "API-first SaaS", "site": "emabler.com", "contact": "see website", "careers": "—", "verified": false, "prio": "B", "source": "VCBacked: funded Helsinki startups 2026", "score": 45}, {"id": "epassi", "name": "ePassi", "city": "Helsinki", "type": "Fintech (benefits)", "why": "Web/mobile", "site": "epassi.fi", "contact": "see website", "careers": "—", "verified": false, "prio": "B", "source": "Initial search (company websites, Clutch, Integrify)", "score": 45}, {"id": "expanly", "name": "Expanly", "city": "Helsinki", "type": "Retail product intelligence", "why": "Data SaaS", "site": "expanly.com", "contact": "see website", "careers": "—", "verified": false, "prio": "B", "source": "VCBacked: funded Helsinki AI startups 2026", "score": 45}, {"id": "fondion", "name": "Fondion", "city": "Espoo", "type": "ERP software", "why": "Business web software", "site": "fondion.com", "contact": "see website", "careers": "—", "verified": false, "prio": "B", "source": "VCBacked: funded Espoo startups", "score": 45}, {"id": "freska", "name": "Freska", "city": "Helsinki", "type": "Service platform", "why": "Web/app", "site": "freska.fi", "contact": "see website", "careers": "—", "verified": false, "prio": "B", "source": "Initial search (company websites, Clutch, Integrify)", "score": 45}, {"id": "funidata", "name": "Funidata", "city": "Helsinki", "type": "EdTech (Sisu)", "why": "Web system for universities", "site": "funidata.fi", "contact": "see website", "careers": "—", "verified": false, "prio": "B", "source": "Initial search (company websites, Clutch, Integrify)", "score": 45}, {"id": "gofore", "name": "Gofore", "city": "Helsinki", "type": "IT consultancy", "why": "Many public-sector projects, web", "site": "gofore.com", "contact": "see website", "careers": "gofore.com (careers)", "verified": false, "prio": "B", "source": "Initial search (company websites, Clutch, Integrify)", "score": 45}, {"id": "hiq-finland", "name": "HiQ Finland", "city": "Helsinki", "type": "IT consultancy", "why": "Web, mobile, integrations", "site": "hiq.fi", "contact": "see website", "careers": "hiq.fi (careers)", "verified": false, "prio": "B", "source": "Initial search (company websites, Clutch, Integrify)", "score": 45}, {"id": "infrakit", "name": "Infrakit", "city": "Espoo", "type": "Construction data SaaS", "why": "Web SaaS", "site": "(Seedtable profile)", "contact": "see website", "careers": "—", "verified": false, "prio": "B", "source": "Seedtable: Espoo SaaS/AI startups 2026", "score": 45}, {"id": "inspectwise", "name": "InspectWise", "city": "Helsinki", "type": "Vehicle inspection app", "why": "Small app team", "site": "inspectwise.net", "contact": "see website", "careers": "—", "verified": false, "prio": "B", "source": "VCBacked: funded Helsinki startups 2026", "score": 45}, {"id": "jobilla", "name": "Jobilla", "city": "Helsinki", "type": "Online recruitment platform", "why": "Web product, Finnish environment", "site": "jobilla.com", "contact": "see website", "careers": "jobilla.com (careers)", "verified": false, "prio": "B", "source": "VCBacked: funded Helsinki startups 2026", "score": 45}, {"id": "klu", "name": "Klu", "city": "Espoo", "type": "Information discovery app", "why": "Small product team", "site": "klu.so", "contact": "see website", "careers": "—", "verified": false, "prio": "B", "source": "VCBacked: funded Espoo startups", "score": 45}, {"id": "knowit-finland", "name": "Knowit Finland", "city": "Helsinki", "type": "IT consultancy", "why": "Web and digital", "site": "knowit.fi", "contact": "see website", "careers": "knowit.fi (careers)", "verified": false, "prio": "B", "source": "Initial search (company websites, Clutch, Integrify)", "score": 45}, {"id": "lyyti", "name": "Lyyti", "city": "Helsinki", "type": "Event SaaS", "why": "Web app, Finnish-speaking environment", "site": "lyyti.com", "contact": "see website", "careers": "—", "verified": false, "prio": "B", "source": "Initial search (company websites, Clutch, Integrify)", "score": 45}, {"id": "meetingpackage", "name": "MeetingPackage", "city": "Espoo", "type": "Meeting-venue booking SaaS", "why": "Web SaaS", "site": "(Seedtable profile)", "contact": "see website", "careers": "—", "verified": false, "prio": "B", "source": "Seedtable: Espoo SaaS/AI startups 2026", "score": 45}, {"id": "netum", "name": "Netum", "city": "Helsinki", "type": "IT consultancy", "why": "Public sector and web", "site": "netum.fi", "contact": "see website", "careers": "netum.fi (careers)", "verified": false, "prio": "B", "source": "Initial search (company websites, Clutch, Integrify)", "score": 45}, {"id": "nitor", "name": "Nitor", "city": "Helsinki", "type": "Software consultancy", "why": "Web and cloud", "site": "nitor.com", "contact": "see website", "careers": "nitor.com (careers)", "verified": false, "prio": "B", "source": "Initial search (company websites, Clutch, Integrify)", "score": 45}, {"id": "oneio", "name": "ONEiO", "city": "Helsinki", "type": "Integration SaaS", "why": "Startup in Seedtable 2026 ranking", "site": "oneio.cloud", "contact": "see website", "careers": "—", "verified": false, "prio": "B", "source": "Initial search (company websites, Clutch, Integrify)", "score": 45}, {"id": "resq-club", "name": "ResQ Club", "city": "Helsinki", "type": "Food-waste app", "why": "Small team", "site": "resq-club.com", "contact": "see website", "careers": "—", "verified": false, "prio": "B", "source": "Initial search (company websites, Clutch, Integrify)", "score": 45}, {"id": "skenariolabs", "name": "Skenariolabs", "city": "Espoo", "type": "Property analytics", "why": "Data/web SaaS", "site": "skenariolabs.com", "contact": "see website", "careers": "—", "verified": false, "prio": "B", "source": "VCBacked: funded Espoo startups", "score": 45}, {"id": "smartly-io", "name": "Smartly.io", "city": "Helsinki", "type": "AdTech SaaS", "why": "Large frontend team", "site": "smartly.io", "contact": "see website", "careers": "smartly.io/careers", "verified": false, "prio": "B", "source": "Initial search (company websites, Clutch, Integrify)", "score": 45}, {"id": "smartum", "name": "Smartum", "city": "Helsinki", "type": "Fintech (benefits)", "why": "Web services", "site": "smartum.fi", "contact": "see website", "careers": "—", "verified": false, "prio": "B", "source": "Initial search (company websites, Clutch, Integrify)", "score": 45}, {"id": "supermetrics", "name": "Supermetrics", "city": "Helsinki", "type": "Data SaaS", "why": "Web/TS development", "site": "supermetrics.com", "contact": "see website", "careers": "supermetrics.com/careers", "verified": false, "prio": "B", "source": "Initial search (company websites, Clutch, Integrify)", "score": 45}, {"id": "swappie", "name": "Swappie", "city": "Helsinki", "type": "E-commerce", "why": "Own web store", "site": "swappie.com", "contact": "see website", "careers": "swappie.com (careers)", "verified": false, "prio": "B", "source": "Initial search (company websites, Clutch, Integrify)", "score": 45}, {"id": "swarmia", "name": "Swarmia", "city": "Helsinki", "type": "SaaS for dev teams", "why": "Developer product, TS/React", "site": "swarmia.com", "contact": "see website", "careers": "swarmia.com/careers", "verified": false, "prio": "B", "source": "Initial search (company websites, Clutch, Integrify)", "score": 45}, {"id": "sympa", "name": "Sympa", "city": "Helsinki", "type": "HR SaaS", "why": "Web product, Finnish-speaking environment", "site": "sympa.com", "contact": "see website", "careers": "—", "verified": false, "prio": "B", "source": "Initial search (company websites, Clutch, Integrify)", "score": 45}, {"id": "time-atlas-labs", "name": "Time Atlas Labs", "city": "Helsinki", "type": "Privacy-first mobile app", "why": "Small app team", "site": "timeatlaslabs.com", "contact": "see website", "careers": "—", "verified": false, "prio": "B", "source": "VCBacked: funded Helsinki startups 2026", "score": 45}, {"id": "vainu", "name": "Vainu", "city": "Helsinki", "type": "Data SaaS", "why": "Web product", "site": "vainu.com", "contact": "see website", "careers": "vainu.com/careers", "verified": false, "prio": "B", "source": "Initial search (company websites, Clutch, Integrify)", "score": 45}, {"id": "veikkaus", "name": "Veikkaus", "city": "Helsinki", "type": "Gaming, large digital team", "why": "Hiring Lead Data Engineer; big web platform", "site": "veikkaus.fi", "contact": "—", "careers": "veikkaus.fi (rekry)", "verified": false, "prio": "C", "source": "Duunitori, Nov 2026", "score": 45}, {"id": "zervant", "name": "Zervant", "city": "Helsinki", "type": "Invoicing SaaS", "why": "Web app for entrepreneurs", "site": "zervant.com", "contact": "see website", "careers": "—", "verified": false, "prio": "B", "source": "Initial search (company websites, Clutch, Integrify)", "score": 45}, {"id": "avaintec", "name": "Avaintec", "city": "Helsinki", "type": "Software company", "why": "Integrify partner", "site": "avaintec.com", "contact": "see website", "careers": "—", "verified": false, "prio": "B", "source": "Initial search (company websites, Clutch, Integrify)", "score": 40}, {"id": "columbia-road", "name": "Columbia Road", "city": "Helsinki", "type": "Digital sales/e-commerce", "why": "E-commerce development", "site": "columbiaroad.com", "contact": "see website", "careers": "columbiaroad.com (careers)", "verified": false, "prio": "B", "source": "Initial search (company websites, Clutch, Integrify)", "score": 40}, {"id": "digia", "name": "Digia", "city": "Helsinki", "type": "IT services", "why": "Integrify partner since 2017", "site": "digia.com", "contact": "see website", "careers": "digia.com (careers)", "verified": false, "prio": "B", "source": "Initial search (company websites, Clutch, Integrify)", "score": 40}, {"id": "iceye", "name": "ICEYE", "city": "Espoo", "type": "Space tech (SAR satellites)", "why": "Large software org, hires platform/DevOps", "site": "iceye.com", "contact": "wb@iceye.com (per HN post)", "careers": "iceye.com/careers", "verified": false, "prio": "C", "source": "HN Who is hiring, Oct 2026", "score": 40}, {"id": "maria-01", "name": "Maria 01", "city": "Helsinki", "type": "Startup campus", "why": "Access to dozens of startups at once", "site": "maria.io", "contact": "see website", "careers": "—", "verified": false, "prio": "B", "source": "Initial search (company websites, Clutch, Integrify)", "score": 40}, {"id": "optomed-software", "name": "Optomed Software", "city": "Espoo", "type": "Software (gaming supervision systems)", "why": "Hiring software developer", "site": "optomed.fi", "contact": "see website", "careers": "itduunit", "verified": false, "prio": "C", "source": "itduunit.fi, Nov 2026", "score": 40}, {"id": "poolia-it", "name": "Poolia IT", "city": "Helsinki", "type": "IT staffing", "why": "Places Power Platform devs and UX/UI designers", "site": "poolia.fi", "contact": "see website", "careers": "poolia.fi (jobs)", "verified": false, "prio": "C", "source": "itduunit.fi, Nov 2026", "score": 40}, {"id": "reaktor", "name": "Reaktor", "city": "Helsinki", "type": "Software consultancy", "why": "Strong engineering culture", "site": "reaktor.com", "contact": "see website", "careers": "reaktor.com/careers", "verified": false, "prio": "B", "source": "Initial search (company websites, Clutch, Integrify)", "score": 40}, {"id": "tangled", "name": "Tangled", "city": "Helsinki", "type": "Decentralized Git platform", "why": "Dev tooling, open source", "site": "tangled.org", "contact": "see website", "careers": "—", "verified": false, "prio": "B", "source": "VCBacked: funded Helsinki startups 2026", "score": 40}, {"id": "twoday", "name": "twoday", "city": "Helsinki", "type": "IT consultancy", "why": "Integrify partner", "site": "twoday.fi", "contact": "see website", "careers": "twoday.fi (careers)", "verified": false, "prio": "B", "source": "Initial search (company websites, Clutch, Integrify)", "score": 40}, {"id": "varma", "name": "Varma", "city": "Helsinki", "type": "Pension insurance, in-house IT", "why": "Hiring IT architect; Finnish environment", "site": "varma.fi", "contact": "—", "careers": "varma.fi (rekry)", "verified": false, "prio": "C", "source": "Duunitori, Nov 2026", "score": 40}, {"id": "verkkokauppa-com", "name": "Verkkokauppa.com", "city": "Helsinki", "type": "E-commerce", "why": "In-house dev team, Finnish-speaking environment", "site": "verkkokauppa.com", "contact": "see website", "careers": "verkkokauppa.com (rekry)", "verified": false, "prio": "B", "source": "Initial search (company websites, Clutch, Integrify)", "score": 40}, {"id": "telia-finland", "name": "Telia Finland", "city": "Helsinki", "type": "Telecom", "why": "Hired Integrify graduates", "site": "telia.fi", "contact": "—", "careers": "telia.fi (rekry)", "verified": false, "prio": "C", "source": "Initial search (company websites, Clutch, Integrify)", "score": 35}, {"id": "aiforia", "name": "Aiforia", "city": "Helsinki", "type": "AI medical image analysis", "why": "Web platform for pathologists", "site": "aiforia.com", "contact": "see website", "careers": "aiforia.com (careers)", "verified": false, "prio": "C", "source": "VCBacked: funded Helsinki startups 2026", "score": 31}, {"id": "hoxhunt", "name": "Hoxhunt", "city": "Helsinki", "type": "Security SaaS", "why": "Web product, AI", "site": "hoxhunt.com", "contact": "see website", "careers": "hoxhunt.com/careers", "verified": false, "prio": "C", "source": "Initial search (company websites, Clutch, Integrify)", "score": 31}, {"id": "mvision-ai", "name": "MVision AI", "city": "Helsinki", "type": "AI radiotherapy planning SaaS", "why": "AI SaaS, web UI", "site": "mvision.ai", "contact": "see website", "careers": "—", "verified": false, "prio": "C", "source": "VCBacked: funded Helsinki startups 2026", "score": 31}, {"id": "skyfora", "name": "Skyfora", "city": "Helsinki", "type": "AI weather forecasts", "why": "Small AI startup", "site": "skyfora.com", "contact": "see website", "careers": "—", "verified": false, "prio": "C", "source": "VCBacked: funded Helsinki AI startups 2026", "score": 31}, {"id": "lepp-vaaran-tietokonehuolto", "name": "Leppävaaran tietokonehuolto", "city": "Espoo", "type": "Computer repair", "why": "Has taken work-practice trainees (fallback option)", "site": "(Duunitori)", "contact": "via Duunitori", "careers": "Duunitori", "verified": false, "prio": "C", "source": "Initial search (company websites, Clutch, Integrify)", "score": 30}, {"id": "veho", "name": "Veho", "city": "Vantaa", "type": "Car dealer (IT department)", "why": "Takes training-agreement trainees year-round", "site": "veho.fi", "contact": "—", "careers": "Indeed: Veho koulutussopimus", "verified": false, "prio": "C", "source": "Initial search (company websites, Clutch, Integrify)", "score": 30}, {"id": "wolt", "name": "Wolt", "city": "Helsinki", "type": "Delivery tech", "why": "Has internship programs", "site": "wolt.com", "contact": "—", "careers": "careers.wolt.com", "verified": false, "prio": "C", "source": "Initial search (company websites, Clutch, Integrify)", "score": 30}, {"id": "codemate", "name": "Codemate", "city": "Helsinki", "type": "Software consultancy, AI-native", "why": "Strong AI focus. NOTE: site currently says no internships — try open application", "site": "codemate.com", "contact": "Kaisaniemenkatu 1B; form at codemate.com/contact", "careers": "codemate.com/careers", "verified": true, "prio": "C", "source": "Initial search (company websites, Clutch, Integrify)", "score": 29}, {"id": "bilot", "name": "Bilot", "city": "Espoo", "type": "Data/AI consultancy", "why": "Data and AI", "site": "bilot.fi", "contact": "see website", "careers": "—", "verified": false, "prio": "C", "source": "Initial search (company websites, Clutch, Integrify)", "score": 26}, {"id": "groundhawk", "name": "Groundhawk", "city": "Espoo", "type": "AI 3D underground mapping", "why": "AI startup", "site": "groundhawk.io", "contact": "see website", "careers": "—", "verified": false, "prio": "C", "source": "VCBacked: funded Espoo startups", "score": 26}, {"id": "houston-analytics", "name": "Houston Analytics", "city": "Helsinki", "type": "Data/AI", "why": "Analytics and AI", "site": "houston-analytics.com", "contact": "see website", "careers": "—", "verified": false, "prio": "C", "source": "Initial search (company websites, Clutch, Integrify)", "score": 26}, {"id": "recordly", "name": "Recordly", "city": "Helsinki", "type": "Data/AI consultancy", "why": "Data engineering, AI", "site": "recordly.fi", "contact": "see website", "careers": "—", "verified": false, "prio": "C", "source": "Initial search (company websites, Clutch, Integrify)", "score": 26}, {"id": "silo-ai-amd", "name": "Silo AI (AMD)", "city": "Helsinki", "type": "AI lab", "why": "AI products", "site": "silo.ai", "contact": "see website", "careers": "silo.ai/careers", "verified": false, "prio": "C", "source": "Initial search (company websites, Clutch, Integrify)", "score": 26}, {"id": "veil-ai", "name": "Veil.ai", "city": "Helsinki", "type": "Health data anonymization", "why": "AI/data startup", "site": "veil.ai", "contact": "see website", "careers": "—", "verified": false, "prio": "C", "source": "VCBacked: funded Helsinki AI startups 2026", "score": 26}, {"id": "verda-datacrunch", "name": "Verda (DataCrunch)", "city": "Helsinki", "type": "AI cloud platform", "why": "Fast-growing, $189M raised", "site": "verda.com", "contact": "—", "careers": "verda.com (careers)", "verified": false, "prio": "C", "source": "VCBacked: funded Helsinki startups 2026", "score": 26}, {"id": "aiven", "name": "Aiven", "city": "Helsinki", "type": "Cloud data SaaS", "why": "Console frontend", "site": "aiven.io", "contact": "see website", "careers": "aiven.io/careers", "verified": false, "prio": "C", "source": "Initial search (company websites, Clutch, Integrify)", "score": 25}, {"id": "alma-media", "name": "Alma Media", "city": "Helsinki", "type": "Media (IL, Etuovi)", "why": "Finnish-language web products", "site": "almamedia.fi", "contact": "—", "careers": "almamedia.fi (rekry)", "verified": false, "prio": "C", "source": "Initial search (company websites, Clutch, Integrify)", "score": 25}, {"id": "cgi-suomi", "name": "CGI Suomi", "city": "Helsinki", "type": "IT giant", "why": "Junior/trainee programs", "site": "cgi.com/fi", "contact": "—", "careers": "cgi.com/fi (careers)", "verified": false, "prio": "C", "source": "Initial search (company websites, Clutch, Integrify)", "score": 25}, {"id": "dealfront-leadfeeder", "name": "Dealfront (Leadfeeder)", "city": "Helsinki", "type": "Sales SaaS", "why": "Web product", "site": "dealfront.com", "contact": "see website", "careers": "—", "verified": false, "prio": "C", "source": "Initial search (company websites, Clutch, Integrify)", "score": 25}, {"id": "flowhaven", "name": "Flowhaven", "city": "Helsinki", "type": "Licensing SaaS", "why": "Web product", "site": "flowhaven.com", "contact": "see website", "careers": "—", "verified": false, "prio": "C", "source": "Initial search (company websites, Clutch, Integrify)", "score": 25}, {"id": "m-files", "name": "M-Files", "city": "Espoo", "type": "Document SaaS", "why": "Software development", "site": "m-files.com", "contact": "see website", "careers": "m-files.com/careers", "verified": false, "prio": "C", "source": "Initial search (company websites, Clutch, Integrify)", "score": 25}, {"id": "nordhealth", "name": "Nordhealth", "city": "Helsinki", "type": "HealthTech SaaS", "why": "Web applications", "site": "nordhealth.com", "contact": "see website", "careers": "—", "verified": false, "prio": "C", "source": "Initial search (company websites, Clutch, Integrify)", "score": 25}, {"id": "nosto", "name": "Nosto", "city": "Helsinki", "type": "E-commerce SaaS", "why": "JS/frontend", "site": "nosto.com", "contact": "see website", "careers": "nosto.com/careers", "verified": false, "prio": "C", "source": "Initial search (company websites, Clutch, Integrify)", "score": 25}, {"id": "oura", "name": "Oura", "city": "Helsinki", "type": "HealthTech", "why": "Web/app teams", "site": "ouraring.com", "contact": "—", "careers": "ouraring.com/careers", "verified": false, "prio": "C", "source": "Initial search (company websites, Clutch, Integrify)", "score": 25}, {"id": "s-ryhm-sok", "name": "S-ryhmä (SOK)", "city": "Helsinki", "type": "Retail digital", "why": "S-mobiili, web", "site": "s-ryhma.fi", "contact": "—", "careers": "s-ryhma.fi (rekry)", "verified": false, "prio": "C", "source": "Initial search (company websites, Clutch, Integrify)", "score": 25}, {"id": "sanoma", "name": "Sanoma", "city": "Helsinki", "type": "Media (HS, Ruutu)", "why": "Finnish-language web products", "site": "sanoma.com", "contact": "—", "careers": "sanoma.com/careers", "verified": false, "prio": "C", "source": "Initial search (company websites, Clutch, Integrify)", "score": 25}, {"id": "sievo", "name": "Sievo", "city": "Helsinki", "type": "Procurement SaaS", "why": "Web analytics", "site": "sievo.com", "contact": "see website", "careers": "sievo.com/careers", "verified": false, "prio": "C", "source": "Initial search (company websites, Clutch, Integrify)", "score": 25}, {"id": "sportiq", "name": "SportIQ", "city": "Helsinki", "type": "Sports analytics", "why": "Analytics web/broadcast tools", "site": "sportiq.fi", "contact": "see website", "careers": "—", "verified": false, "prio": "C", "source": "VCBacked: funded Helsinki startups 2026", "score": 25}, {"id": "tietoevry", "name": "Tietoevry", "city": "Espoo", "type": "IT giant", "why": "Many projects, trainee programs", "site": "tietoevry.com", "contact": "—", "careers": "tietoevry.com/careers", "verified": false, "prio": "C", "source": "Initial search (company websites, Clutch, Integrify)", "score": 25}, {"id": "yle", "name": "Yle", "city": "Helsinki", "type": "Public broadcaster", "why": "Areena and web — Finnish-speaking environment", "site": "yle.fi", "contact": "—", "careers": "yle.fi/aihe/tyopaikat", "verified": false, "prio": "C", "source": "Initial search (company websites, Clutch, Integrify)", "score": 25}, {"id": "yousician", "name": "Yousician", "city": "Helsinki", "type": "EdTech", "why": "Web and mobile", "site": "yousician.com", "contact": "see website", "careers": "yousician.com/careers", "verified": false, "prio": "C", "source": "Initial search (company websites, Clutch, Integrify)", "score": 25}, {"id": "zalando-helsinki", "name": "Zalando Helsinki", "city": "Helsinki", "type": "E-commerce tech hub", "why": "Large frontend hub", "site": "jobs.zalando.com", "contact": "—", "careers": "jobs.zalando.com", "verified": false, "prio": "C", "source": "Initial search (company websites, Clutch, Integrify)", "score": 25}, {"id": "zenniz", "name": "Zenniz", "city": "Helsinki", "type": "Tennis tracking tech", "why": "Apps + web dashboards", "site": "zenniz.com", "contact": "see website", "careers": "—", "verified": false, "prio": "C", "source": "VCBacked: funded Helsinki startups 2026", "score": 25}, {"id": "dvv-digital-and-population-data-services-agency", "name": "DVV (Digital and Population Data Services Agency)", "city": "Helsinki", "type": "Government digital agency", "why": "Suomi.fi services", "site": "dvv.fi", "contact": "—", "careers": "dvv.fi (rekry)", "verified": false, "prio": "C", "source": "Initial search (company websites, Clutch, Integrify)", "score": 20}, {"id": "f-secure", "name": "F-Secure", "city": "Helsinki", "type": "Cybersecurity", "why": "Consumer apps", "site": "f-secure.com", "contact": "—", "careers": "f-secure.com (careers)", "verified": false, "prio": "C", "source": "Initial search (company websites, Clutch, Integrify)", "score": 20}, {"id": "fluido", "name": "Fluido", "city": "Helsinki", "type": "Salesforce consultancy", "why": "Low-code/CRM development", "site": "fluidogroup.com", "contact": "see website", "careers": "—", "verified": false, "prio": "C", "source": "Initial search (company websites, Clutch, Integrify)", "score": 20}, {"id": "frends-hiq", "name": "Frends (HiQ)", "city": "Helsinki", "type": "Integration platform", "why": "Integrations, low entry barrier", "site": "frends.com", "contact": "see website", "careers": "—", "verified": false, "prio": "C", "source": "Initial search (company websites, Clutch, Integrify)", "score": 20}, {"id": "kela-it", "name": "Kela (IT)", "city": "Helsinki", "type": "Government agency", "why": "Large IT department, Finnish-speaking environment", "site": "kela.fi", "contact": "—", "careers": "kela.fi (rekry)", "verified": false, "prio": "C", "source": "Initial search (company websites, Clutch, Integrify)", "score": 20}, {"id": "kesko", "name": "Kesko", "city": "Helsinki", "type": "Retail digital", "why": "Own K-digital team", "site": "kesko.fi", "contact": "—", "careers": "kesko.fi (rekry)", "verified": false, "prio": "C", "source": "Initial search (company websites, Clutch, Integrify)", "score": 20}, {"id": "kone", "name": "KONE", "city": "Espoo", "type": "Industrial digital", "why": "Digital teams", "site": "kone.com", "contact": "—", "careers": "kone.com/careers", "verified": false, "prio": "C", "source": "Initial search (company websites, Clutch, Integrify)", "score": 20}, {"id": "loihde", "name": "Loihde", "city": "Helsinki", "type": "IT services", "why": "Development and security", "site": "loihde.com", "contact": "see website", "careers": "—", "verified": false, "prio": "C", "source": "Initial search (company websites, Clutch, Integrify)", "score": 20}, {"id": "polar-squad", "name": "Polar Squad", "city": "Helsinki", "type": "DevOps consultancy", "why": "Cloud and platforms", "site": "polarsquad.com", "contact": "see website", "careers": "polarsquad.com (careers)", "verified": false, "prio": "C", "source": "Initial search (company websites, Clutch, Integrify)", "score": 20}, {"id": "supersight", "name": "Supersight", "city": "Helsinki", "type": "Computer-vision people counting", "why": "Dashboards + CV", "site": "peoplecounter.io", "contact": "see website", "careers": "—", "verified": false, "prio": "C", "source": "VCBacked: funded Helsinki AI startups 2026", "score": 20}, {"id": "varjo", "name": "Varjo", "city": "Helsinki", "type": "XR hardware/software", "why": "Software team", "site": "varjo.com", "contact": "see website", "careers": "varjo.com/careers", "verified": false, "prio": "C", "source": "Initial search (company websites, Clutch, Integrify)", "score": 20}, {"id": "visma-finland", "name": "Visma Finland", "city": "Helsinki", "type": "Business software", "why": "Many product teams", "site": "visma.fi", "contact": "—", "careers": "visma.fi (careers)", "verified": false, "prio": "C", "source": "Initial search (company websites, Clutch, Integrify)", "score": 20}, {"id": "withsecure", "name": "WithSecure", "city": "Helsinki", "type": "Cybersecurity", "why": "Integrify partner", "site": "withsecure.com", "contact": "—", "careers": "withsecure.com (careers)", "verified": false, "prio": "C", "source": "Initial search (company websites, Clutch, Integrify)", "score": 20}, {"id": "elisa", "name": "Elisa", "city": "Helsinki", "type": "Telecom + digital", "why": "Large dev teams", "site": "elisa.fi", "contact": "—", "careers": "elisa.fi/rekry", "verified": false, "prio": "C", "source": "Initial search (company websites, Clutch, Integrify)", "score": 15}, {"id": "nokia", "name": "Nokia", "city": "Espoo", "type": "Telecom", "why": "Huge R&D", "site": "nokia.com", "contact": "—", "careers": "nokia.com/careers", "verified": false, "prio": "C", "source": "Initial search (company websites, Clutch, Integrify)", "score": 15}];
+const STAGES=[["new","Not contacted"],["sent","Sent"],["replied","Replied"],["interview","Interview"],["accepted","Accepted"],["declined","Declined"]];
+const LABEL=Object.fromEntries(STAGES);
+const HIRING=/Duunitori, Nov|itduunit|Jobly|HN Who|glich|theorg/;
+const DEF_EN=`Subject: Work practice placement – frontend / full-stack developer
+
+Hi {company} team,
+
+I'm a frontend and full-stack developer (TypeScript, React, Node.js) currently in integration training (kotoutumiskoulutus) in Helsinki. The programme includes a six-week work practice period, and I would like to do it at {company}.
+
+The placement is free for the employer, and my school handles the agreement. I have about 1.5 years of commercial experience building products from scratch to release, and I use AI coding tools in my daily work.
+
+Would you be open to a short call?
+
+Best regards,
+{name}
+{email}
+{phone}
+{link}`;
+const DEF_FI=`Subject: Työharjoittelupaikka – frontend- / full-stack-kehittäjä
+
+Hei {company},
+
+olen frontend- ja full-stack-kehittäjä (TypeScript, React, Node.js) ja opiskelen kotoutumiskoulutuksessa Helsingissä. Koulutukseen kuuluu kuuden viikon työharjoittelu, ja olisin kiinnostunut tekemään sen teillä.
+
+Harjoittelu on työnantajalle maksuton, ja oppilaitokseni hoitaa harjoittelusopimuksen. Minulla on noin 1,5 vuoden kokemus ohjelmistokehityksestä, ja käytän tekoälytyökaluja päivittäin.
+
+Sopisiko lyhyt puhelu?
+
+Ystävällisin terveisin
+{name}
+{email}
+{phone}
+{link}`;
+
+let progress={}, custom=[], profile={}, db=null, dl=null, canWrite=false;
+let F={prio:"",city:"",sort:"fit"}, tab="", dueOnly=false, openId=null, sel=-1, lang="en", visible=[];
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const todayISO=()=>new Date().toISOString().slice(0,10);
+const addDays=(iso,n)=>{const d=new Date(iso);d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)};
+const fmt=iso=>iso?new Date(iso).toLocaleDateString("en-GB",{day:"numeric",month:"short"}):"—";
+const toast=m=>{const t=$("toast");t.textContent=m;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>t.hidden=true,1800)};
+const all=()=>COMPANIES.concat(custom);
+const byId=id=>all().find(c=>c.id===id);
+const P=id=>progress[id]||{};
+const st=id=>P(id).stage||"new";
+const isDue=id=>{const p=P(id);return p.stage==="sent"&&p.followUp&&p.followUp<=todayISO()};
+const blank=v=>!v||v==="—"||v==="see website";
+const isUrl=v=>/^[a-z0-9.-]+\.[a-z]{2,}(\/\S*)?$/i.test((v||"").split(" ")[0]);
+const href=v=>"https://"+v.split(" ")[0];
+const setMode=m=>{document.documentElement.dataset.mode=m;try{localStorage.setItem("mode",m)}catch(_){}};
+try{if(localStorage.getItem("mode")==="dark")document.documentElement.dataset.mode="dark"}catch(_){}
+
+function stats(){
+  const L=all(),n=L.length;let c=0,r=0,i=0,d=0;
+  L.forEach(x=>{const s=st(x.id);if(s!=="new")c++;if(["replied","interview","accepted","declined"].includes(s))r++;if(["interview","accepted"].includes(s))i++;if(isDue(x.id))d++});
+  $("stats").innerHTML=`<div class="stat"><dt>Contacted</dt><dd>${c}<small> / ${n}</small></dd></div>
+  <div class="stat"><dt>Response rate</dt><dd>${c?Math.round(r/c*100):0}<small>%</small></dd></div>
+  <div class="stat"><dt>Interviews</dt><dd>${i}</dd></div>
+  <button class="stat" type="button" id="dueBtn" aria-pressed="${dueOnly}"><dt>Follow-ups due</dt><dd>${d}</dd></button>`;
+}
+function tabs(){
+  const cnt={"":all().length};STAGES.forEach(s=>cnt[s[0]]=0);all().forEach(c=>cnt[st(c.id)]++);
+  $("tabs").innerHTML=[["","All"],...STAGES].map(([k,l])=>`<button class="tab" role="tab" type="button" data-tab="${k}" aria-selected="${tab===k}">${l}<span class="n">${cnt[k]}</span></button>`).join("");
+}
+function pill(id){
+  const s=st(id);
+  return `<button class="pill s-${s}" type="button" data-menu="stage" data-for="${esc(id)}" aria-haspopup="menu" aria-expanded="false" aria-label="Stage: ${LABEL[s]}" ${canWrite?"":"disabled"}>${LABEL[s]}</button>`;
+}
+const MENUS={
+  prio:{opts:[["","All priorities"],["A","Priority A"],["B","Priority B"],["C","Priority C"]],get:()=>F.prio,set:v=>{F.prio=v;sel=-1;list()}},
+  city:{opts:[["","All cities"],["Helsinki","Helsinki"],["Espoo","Espoo"],["Vantaa","Vantaa"]],get:()=>F.city,set:v=>{F.city=v;sel=-1;list()}},
+  sort:{opts:[["fit","Sort: Fit"],["updated","Sort: Last updated"],["follow","Sort: Follow-up date"],["name","Sort: Name"]],get:()=>F.sort,set:v=>{F.sort=v;sel=-1;list()}},
+  stage:{opts:STAGES,get:a=>st(a.dataset.for),set:(v,a)=>save(a.dataset.for,{stage:v},{redrawDrawer:a.dataset.for===openId})}
+};
+function labels(){document.querySelectorAll(".toolbar [data-menu]").forEach(b=>{const m=MENUS[b.dataset.menu];b.textContent=m.opts.find(o=>o[0]===m.get())[1]})}
+let menuAnchor=null;
+function openMenu(a){
+  const m=MENUS[a.dataset.menu],cur=m.get(a),el=$("menu");
+  closeMenu();menuAnchor=a;a.setAttribute("aria-expanded","true");
+  el.innerHTML=m.opts.map(([k,l])=>`<button type="button" role="menuitemradio" aria-checked="${k===cur}" data-v="${esc(k)}">${esc(l)}</button>`).join("");
+  el.hidden=false;
+  const r=a.getBoundingClientRect(),w=el.offsetWidth,h=el.offsetHeight,vw=innerWidth,vh=innerHeight;
+  el.style.left=Math.max(8,Math.min(r.left,vw-w-8))+"px";
+  el.style.top=(r.bottom+4+h>vh-8&&r.top-4-h>8?r.top-4-h:r.bottom+4)+"px";
+  (el.querySelector('[aria-checked="true"]')||el.firstElementChild).focus({preventScroll:true});
+}
+function closeMenu(refocus){
+  const el=$("menu");if(el.hidden)return;el.hidden=true;el.innerHTML="";
+  const a=menuAnchor;menuAnchor=null;if(a&&a.isConnected){a.setAttribute("aria-expanded","false");if(refocus)a.focus({preventScroll:true})}
+}
+function pickMenu(v){const a=menuAnchor;const m=MENUS[a.dataset.menu];closeMenu(true);m.set(v,a);labels()}
+function list(){
+  const q=$("q").value.trim().toLowerCase(),pr=F.prio,city=F.city,hire=$("hiring").getAttribute("aria-pressed")==="true",sort=F.sort;
+  let L=all().filter(c=>(!tab||st(c.id)===tab)&&(!pr||c.prio===pr)&&(!city||(c.city||"").includes(city))&&(!hire||HIRING.test(c.source||""))&&(!dueOnly||isDue(c.id))&&
+    (!q||[c.name,c.type,c.why,c.city,P(c.id).notes].join(" ").toLowerCase().includes(q)));
+  const cmp={fit:(a,b)=>(b.score??0)-(a.score??0)||a.name.localeCompare(b.name),
+    name:(a,b)=>a.name.localeCompare(b.name),
+    updated:(a,b)=>(P(b.id).updatedAt||"").localeCompare(P(a.id).updatedAt||"")||(b.score??0)-(a.score??0),
+    follow:(a,b)=>(P(a.id).followUp||"9999").localeCompare(P(b.id).followUp||"9999")||(b.score??0)-(a.score??0)}[sort];
+  visible=L.sort(cmp);
+  if(!visible.length){$("table").innerHTML=`<div class="empty">No companies match.</div>`;return}
+  $("table").innerHTML=`<div class="tr th" role="presentation"><span>Company</span><span class="r">Fit</span><span>Stage</span><span class="r">Contacted</span><span class="r">Follow-up</span></div>`+
+   visible.map((c,i)=>{const p=P(c.id);return `<div class="tr row${c.id===openId||i===sel?" active":""}" role="listitem" data-id="${esc(c.id)}" data-i="${i}" tabindex="-1">
+     <div class="co"><b>${esc(c.name)}</b><span class="sub">${esc(c.city)}${c.type?" · "+esc(c.type):""}${HIRING.test(c.source||"")?' · <span class="hire">Hiring now</span>':""}</span></div>
+     <span class="fit">${c.score??"—"}</span>
+     <span>${pill(c.id)}</span>
+     <span class="dt">${fmt(p.date)}</span>
+     <span class="dt${isDue(c.id)?" due":""}">${p.stage==="sent"?fmt(p.followUp):"—"}</span>
+   </div>`}).join("");
+}
+function fill(tpl,c){
+  const v={company:c.name,name:profile.name,email:profile.email,phone:profile.phone,link:profile.link};
+  let t=tpl.replace(/\r/g,"").replace(/\{(\w+)\}/g,(m,k)=>v[k]??"").replace(/[ \t]+$/gm,"").trim();
+  const parts=t.split(/\n\n+/);parts[parts.length-1]=parts[parts.length-1].split("\n").filter(l=>l.trim()).join("\n");t=parts.join("\n\n");
+  const m=t.match(/^Subject:\s*(.*)\n+/i);return {subject:m?m[1]:"",body:m?t.slice(m[0].length):t};
+}
+function drawer(){
+  const root=$("drawerRoot");const c=openId&&byId(openId);
+  if(!c){root.innerHTML="";return}
+  const p=P(c.id),s=st(c.id),m=fill(lang==="fi"?(profile.fi||DEF_FI):(profile.en||DEF_EN),c),dis=canWrite?"":"disabled";
+  const log=(p.log||[]).slice().reverse();
+  root.innerHTML=`<div class="scrim" data-close-drawer></div>
+  <aside class="drawer" role="dialog" aria-modal="true" aria-label="${esc(c.name)}">
+    <div class="dh"><div><h2>${esc(c.name)}</h2><p>${esc(c.city)}${c.type?" · "+esc(c.type):""}</p></div>
+      <button class="icon" type="button" data-close-drawer aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="db">
+      <div class="sec"><span class="lbl">Stage</span><div class="seg">${STAGES.map(([k,l])=>`<button type="button" class="${k===s?"s-"+k:""}" data-set-stage="${k}" aria-pressed="${k===s}" ${dis}>${l}</button>`).join("")}</div></div>
+      <div class="two">
+        <label class="sec"><span class="lbl">Contacted</span><input class="field date" type="date" data-field="date" value="${esc(p.date||"")}" ${dis}></label>
+        <label class="sec"><span class="lbl">Follow up on</span><input class="field date" type="date" data-field="followUp" value="${esc(p.followUp||"")}" ${dis}></label>
+      </div>
+      ${blank(c.contact)?"":`<div class="sec"><span class="lbl">Contact</span><div class="contact"><span>${esc(c.contact)}</span><button class="link" type="button" data-copy="${esc(c.contact)}">Copy</button></div></div>`}
+      ${(!blank(c.site)&&isUrl(c.site))||(!blank(c.careers)&&isUrl(c.careers))?`<div class="links">${!blank(c.site)&&isUrl(c.site)?`<a class="btn2" href="${esc(href(c.site))}" target="_blank" rel="noopener">Website ↗</a>`:""}${!blank(c.careers)&&isUrl(c.careers)?`<a class="btn2" href="${esc(href(c.careers))}" target="_blank" rel="noopener">Jobs ↗</a>`:""}</div>`:(!blank(c.careers)?`<p class="muted">Jobs: ${esc(c.careers)}</p>`:"")}
+      ${c.why?`<div class="sec"><span class="lbl">Why it fits</span><p class="text">${esc(c.why)}</p></div>`:""}
+      <div class="sec"><span class="lbl">Message</span>
+        <div class="msg"><div class="msg-h"><span class="lbl">${m.subject?esc(m.subject):"No subject"}</span>
+          <div class="lang"><button type="button" data-lang="en" aria-pressed="${lang==="en"}">EN</button><button type="button" data-lang="fi" aria-pressed="${lang==="fi"}">FI</button></div></div>
+          <div class="msg-b">${esc(m.body)}</div>
+          <div class="msg-f"><button class="btn2" type="button" data-copy-msg>Copy message</button>${m.subject?`<button class="btn2" type="button" data-copy="${esc(m.subject)}">Copy subject</button>`:""}${s==="new"&&canWrite?`<button class="btn" type="button" data-set-stage="sent">Mark as sent</button>`:""}</div>
+        </div>
+        ${profile.name?"":`<p class="muted">Add your name and contacts in <button class="link" type="button" data-open-settings>Profile</button> to fill the signature.</p>`}
+      </div>
+      <label class="sec"><span class="lbl">Notes</span><textarea data-field="notes" placeholder="Who you talked to, next steps…" ${dis}>${esc(p.notes||"")}</textarea></label>
+      ${log.length?`<div class="sec"><span class="lbl">Activity</span><ul class="log">${log.map(e=>`<li><span>${esc(LABEL[e.s]||e.s)}</span><time>${fmt(e.at)}</time></li>`).join("")}</ul></div>`:""}
+      ${c.source?`<p class="muted">Source: ${esc(c.source)}</p>`:""}
+      ${c.custom&&canWrite?`<button class="link danger" type="button" data-remove="${esc(c.cid)}" style="justify-self:start">Remove company</button>`:""}
+    </div>
+  </aside>`;
+}
+function render(){closeMenu();stats();tabs();list();drawer();labels()}
+function renderKeepDrawer(){closeMenu();stats();tabs();list()}
+
+const chains={};
+function save(id,patch,{redrawDrawer=true}={}){
+  const prev=P(id);const next={...prev,stage:prev.stage||"new",...patch,updatedAt:new Date().toISOString()};
+  if(patch.stage&&patch.stage!==prev.stage){
+    next.log=[...(prev.log||[]),{s:patch.stage,at:new Date().toISOString()}];
+    if(patch.stage!=="new"&&!next.date)next.date=todayISO();
+    if(patch.stage==="sent"&&!next.followUp)next.followUp=addDays(next.date||todayISO(),7);
+  }
+  progress[id]=next;redrawDrawer?render():renderKeepDrawer();
+  if(!db||!canWrite)return;
+  chains[id]=(chains[id]||Promise.resolve()).then(()=>db.collection("progress").doc(id).set(next)).catch(()=>{canWrite=false;$("sync").textContent="Read-only";render()});
+}
+async function copy(text){try{await navigator.clipboard.writeText(text);toast("Copied")}catch(_){toast("Copy not allowed here")}}
+function open(id){openId=id;render();setTimeout(()=>document.querySelector(".drawer .icon")?.focus({preventScroll:true}),0)}
+function close(){const id=openId;openId=null;render();document.querySelector(`.row[data-id="${CSS.escape(id||"")}"]`)?.focus({preventScroll:true})}
+
+document.addEventListener("click",e=>{
+  const t=e.target;let x;
+  if(x=t.closest("#menu [data-v]")){pickMenu(x.dataset.v);return}
+  if(x=t.closest("[data-menu]")){if(menuAnchor===x){closeMenu(true)}else openMenu(x);return}
+  if(!t.closest("#menu"))closeMenu();
+  if(x=t.closest("[data-tab]")){tab=x.dataset.tab;sel=-1;render();return}
+  if(t.closest("#dueBtn")){dueOnly=!dueOnly;tab="";render();return}
+  if(t.closest("[data-close-drawer]")){close();return}
+  if(x=t.closest("[data-set-stage]")){save(openId,{stage:x.dataset.setStage});return}
+  if(x=t.closest("[data-lang]")){lang=x.dataset.lang;drawer();return}
+  if(t.closest("[data-copy-msg]")){const c=byId(openId),m=fill(lang==="fi"?(profile.fi||DEF_FI):(profile.en||DEF_EN),c);copy(m.body);return}
+  if(x=t.closest("[data-copy]")){copy(x.dataset.copy);return}
+  if(t.closest("[data-open-settings]")){openSettings();return}
+  if(x=t.closest("[data-remove]")){if(x.dataset.sure){db.collection("custom").doc(x.dataset.remove).delete().then(()=>{openId=null;toast("Removed")})}else{x.dataset.sure="1";x.textContent="Click again to remove"}return}
+  if(t.closest("[data-close]")){t.closest("dialog").close();return}
+  if(t.closest("select,input,textarea,a,button"))return;
+  if(x=t.closest(".row")){open(x.dataset.id)}
+});
+document.addEventListener("change",e=>{
+  const t=e.target;
+  if(t.dataset.field&&openId){save(openId,{[t.dataset.field]:t.value},{redrawDrawer:t.dataset.field!=="notes"})}
+});
+$("q").addEventListener("input",()=>{sel=-1;list()});
+addEventListener("resize",()=>closeMenu());document.addEventListener("scroll",()=>closeMenu(),true);
+$("hiring").onclick=()=>{const b=$("hiring");b.setAttribute("aria-pressed",b.getAttribute("aria-pressed")!=="true");list()};
+$("modeBtn").onclick=()=>setMode(document.documentElement.dataset.mode==="dark"?"light":"dark");
+$("addBtn").onclick=()=>{if(!canWrite){toast("Sign in to add companies");return}$("addDlg").showModal()};
+$("addForm").addEventListener("submit",async e=>{
+  e.preventDefault();const name=$("a-name").value.trim();if(!name)return;const pr=$("a-prio").value;
+  const doc={name,city:$("a-city").value.trim(),site:$("a-site").value.trim().replace(/^https?:\/\//,""),contact:$("a-contact").value.trim(),why:$("a-why").value.trim(),prio:pr,type:"",score:{A:70,B:50,C:30}[pr],source:"Added manually",createdAt:new Date().toISOString()};
+  $("addDlg").close();$("addForm").reset();
+  try{const ref=await db.collection("custom").add(doc);toast("Added");open("c-"+ref.id)}catch(_){toast("Couldn't add")}
+});
+function openSettings(){
+  $("p-name").value=profile.name||"";$("p-email").value=profile.email||"";$("p-phone").value=profile.phone||"";$("p-link").value=profile.link||"";
+  $("p-en").value=profile.en||DEF_EN;$("p-fi").value=profile.fi||DEF_FI;$("setDlg").showModal();
+}
+$("settingsBtn").onclick=openSettings;
+$("bkExport").onclick=()=>backup.export();
+$("bkFile").onchange=e=>{const f=e.target.files[0];if(f){backup.import(f);$("setDlg").close()}e.target.value=""};
+$("bkReset").onclick=e=>{const b=e.currentTarget;if(b.dataset.sure){backup.reset();$("setDlg").close();delete b.dataset.sure;b.textContent="Reset"}else{b.dataset.sure="1";b.textContent="Click again to erase all data"}};
+$("setForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  profile={name:$("p-name").value.trim(),email:$("p-email").value.trim(),phone:$("p-phone").value.trim(),link:$("p-link").value.trim(),en:$("p-en").value,fi:$("p-fi").value};
+  $("setDlg").close();drawer();
+  if(db&&canWrite){try{await db.collection("settings").doc("profile").set(profile);toast("Saved")}catch(_){toast("Couldn't save")}}
+});
+$("exportBtn").onclick=async()=>{
+  const cols=["Rank","Company","City","Fit","Priority","Stage","Contacted","Follow-up","Contact","Website","Notes"];
+  const q=v=>`"${String(v??"").replace(/"/g,'""')}"`;
+  const rows=all().slice().sort((a,b)=>(b.score??0)-(a.score??0)).map((c,i)=>{const p=P(c.id);return [i+1,c.name,c.city,c.score,c.prio,LABEL[st(c.id)],p.date,p.followUp,c.contact,c.site,p.notes].map(q).join(",")});
+  const csv="﻿"+[cols.map(q).join(","),...rows].join("\n");
+  if(!dl){toast("Export isn't available in this view");return}
+  try{await dl.save({filename:`pipeline-${todayISO()}.csv`,data:csv})}catch(err){if(err?.code!=="declined")toast("Export failed")}
+};
+document.addEventListener("keydown",e=>{
+  if(!$("menu").hidden){
+    const items=[...$("menu").children],i=items.indexOf(document.activeElement);
+    if(e.key==="Escape"){e.preventDefault();closeMenu(true)}
+    else if(e.key==="ArrowDown"){e.preventDefault();items[(i+1)%items.length].focus()}
+    else if(e.key==="ArrowUp"){e.preventDefault();items[(i-1+items.length)%items.length].focus()}
+    else if(e.key==="Tab")closeMenu();
+    return;
+  }
+  const typing=/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName||"")||document.querySelector("dialog[open]");
+  if(e.key==="Escape"&&openId&&!document.querySelector("dialog[open]")){close();return}
+  if(typing)return;
+  if(e.key==="/"){e.preventDefault();$("q").focus();return}
+  if(openId&&/^[1-6]$/.test(e.key)&&canWrite){save(openId,{stage:STAGES[+e.key-1][0]});return}
+  if(e.key==="j"||e.key==="ArrowDown"||e.key==="k"||e.key==="ArrowUp"){
+    if(!visible.length)return;e.preventDefault();
+    const cur=openId?visible.findIndex(c=>c.id===openId):sel;
+    sel=Math.max(0,Math.min(visible.length-1,cur+(/j|ArrowDown/.test(e.key)?1:-1)));
+    if(openId){openId=visible[sel].id;render()}else{list()}
+    document.querySelector(`.row[data-i="${sel}"]`)?.scrollIntoView({block:"nearest"});return}
+  if(e.key==="Enter"&&sel>=0&&!openId){open(visible[sel].id)}
+});
+
+render();
+(()=>{
+  const K="harjoittelu-pipeline:";
+  const read=(k,d)=>{try{const v=localStorage.getItem(K+k);return v?JSON.parse(v):d}catch(_){return d}};
+  const write=(k,v)=>{try{localStorage.setItem(K+k,JSON.stringify(v))}catch(_){toast("Browser storage is unavailable")}};
+  let customMap=read("custom",{});
+  progress=read("progress",{});profile=read("profile",{});
+  const syncCustom=()=>{custom=Object.entries(customMap).map(([cid,d])=>({...d,cid,id:"c-"+cid,custom:true}))};
+  syncCustom();
+  db={collection(name){return{
+    doc(id){return{
+      set:async d=>{if(name==="progress"){write("progress",progress)}else if(name==="settings"){write("profile",d)}else{customMap[id]=d;write("custom",customMap);syncCustom();render()}},
+      delete:async()=>{if(name==="custom"){delete customMap[id];write("custom",customMap);syncCustom();render()}}}},
+    add:async d=>{const id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);customMap[id]=d;write("custom",customMap);syncCustom();render();return{id}}
+  }}};
+  dl={save:async({filename,data})=>{const u=URL.createObjectURL(new Blob([data],{type:filename.endsWith(".json")?"application/json":"text/csv"}));const a=document.createElement("a");a.href=u;a.download=filename;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1000)}};
+  canWrite=true;$("sync").textContent="";
+  window.backup={
+    export(){dl.save({filename:`pipeline-backup-${todayISO()}.json`,data:JSON.stringify({version:1,progress,custom:customMap,profile},null,2)})},
+    async import(file){try{const j=JSON.parse(await file.text());progress=j.progress||{};customMap=j.custom||{};profile=j.profile||{};write("progress",progress);write("custom",customMap);write("profile",profile);syncCustom();render();toast("Restored")}catch(_){toast("Not a valid backup file")}},
+    reset(){progress={};customMap={};profile={};["progress","custom","profile"].forEach(k=>{try{localStorage.removeItem(K+k)}catch(_){}});syncCustom();render();toast("Reset")}
+  };
+  render();
+})();
+</script>
+
+</body>
+</html>
